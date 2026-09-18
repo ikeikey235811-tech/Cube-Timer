@@ -43,7 +43,6 @@
   .pickrow:empty{display:none}
   .pickrow select{font-size:18px;padding:8px 14px;border-radius:10px;font-weight:bold}
   .btnConn.on{background:var(--ok);border-color:var(--ok);color:#06121f;font-weight:bold}
-  .ghostload:empty{display:none}
   .tag{font-size:22px;font-weight:bold;letter-spacing:.08em;margin-right:2px}
   .side[data-k="A"] .tag, .setside[data-k="A"] .tag{color:var(--a)}
   .side[data-k="B"] .tag, .setside[data-k="B"] .tag{color:var(--b)}
@@ -102,8 +101,6 @@
   .colorRow .lab{font-size:11px;color:var(--muted)}
   .chip{width:20px;height:20px;border-radius:6px;border:1px solid #0d0f13;display:inline-block;vertical-align:middle}
   .macinfo{font-size:11px;color:var(--muted);flex:1;min-width:110px;text-align:right}
-  .ghostslot{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .ghostinfo{font-size:11px;color:var(--muted);flex:1;min-width:110px;text-align:right}
 
   .timer{font-size:74px;font-weight:bold;font-variant-numeric:tabular-nums;line-height:1.05;
     letter-spacing:-.02em;text-align:center;margin:2px 0 4px;
@@ -170,6 +167,11 @@
   td.win{color:var(--ok);font-weight:bold}
   td.sp{font-size:11px;color:var(--muted)}
   .tot{border-top:2px solid var(--line)}
+  /* a battle round reads as one block: the scramble on top, the times under it */
+  tr.scrrow td{border-bottom:none;padding-bottom:1px}
+  tr.scrrow td.sp{text-align:left;letter-spacing:.03em}
+  th.scr,td.scr{text-align:left;padding-left:22px;letter-spacing:.03em}
+  tr.dat td{padding-top:1px}
   td.del{cursor:pointer}
   td.del:hover{color:var(--err);text-decoration:line-through}
   .empty{font-size:12px;color:var(--muted)}
@@ -196,13 +198,8 @@
   <label class="opt">Digits <select id="selPrec">
     <option value="2">0.01 s</option><option value="3">0.001 s</option></select></label>
   <button id="btnReset">Reset ALL</button>
-  <!-- the ghost controls live with side B: the two below move into its cube panel
-       and the two above it into the row over its cube, once the sides are built -->
-  <button id="btnGhost">Load</button>
-  <select id="selGhostSes" style="display:none"></select>
-  <select id="selGhostNo" style="display:none" title="Which recorded solve to race"></select>
-  <button id="btnGhostOff" style="display:none">Leave ghost</button>
-  <input type="file" id="fileGhost" accept=".txt,.json,text/*" style="display:none">
+  <!-- the scramble picker moves under side B's cube once the sides are built -->
+  <select id="selGhostNo" style="display:none" title="Which scramble to try"></select>
   <span class="spacer"></span>
   <span class="opt" id="engineInfo">Engine preparing…</span>
 </div>
@@ -254,10 +251,7 @@
     <button id="btnSortKey" class="small">Sort by time</button>
     <button id="btnSortDir" class="small">Reverse</button>
     <span class="sortnote" id="sortnote"></span>
-    <span class="spacer"></span>
-    <button id="btnSave" class="small">Save session</button>
-    <button id="btnLoad" class="small">Load session</button>
-    <input type="file" id="fileSess" accept=".json,.txt,application/json,text/*" style="display:none"></div>
+    <span class="spacer"></span></div>
   <div id="resWrap"><div class="empty">No rounds yet.</div></div>
 </div>
 
@@ -2552,7 +2546,6 @@ const SIDE_HTML = `
   <div class="sidetop">
     <span class="tag"></span>
     <button class="btnConn primary">Connect</button>
-    <span class="ghostload"></span>
     <button class="btnSolved small">Reset cube</button>
   </div>
   <div class="stage"><div class="cube3d"></div></div>
@@ -2600,11 +2593,6 @@ const SET_HTML = `
     <label class="lab" style="display:flex;align-items:center;gap:5px;cursor:pointer">
       <input type="checkbox" class="optBest"> Only the best time per scramble</label>
     <span class="expinfo"></span>
-  </div>
-  <div class="colorRow ghostrow">
-    <span class="lab">Ghost</span>
-    <span class="ghostslot"></span>
-    <span class="ghostinfo"></span>
   </div>`;
 
 function makeSide(root, sroot, key, ctl){
@@ -2621,6 +2609,7 @@ function makeSide(root, sroot, key, ctl){
   let REF = Object.assign({}, STD_REF);
   let crossFace = "U", frontFace = "F", ORI = null, PH = null;
   let conn = null, battTimer = null, device = null, facWarned = false, live = false;
+  let connLock = false;                 // side B cannot join once a mode has been chosen
   let state = SOLVED, phase = IDLE;
   let A = {S:[], rem:[]}, lastLen = -1, target = SOLVED, recalced = false;
   let lastShown = null;                 // the round just played, kept up during the next scramble
@@ -3078,8 +3067,9 @@ function makeSide(root, sroot, key, ctl){
     const on = !!conn, b = q("btnConn");
     b.textContent = on ? "Connected" : "Connect";
     b.className = "btnConn" + (on ? " on" : " primary");
-    b.title = on ? "Connected — press to disconnect" : "Connect this side's cube";
-    b.disabled = ghostMode;
+    b.title = connLock && !on ? "Only at the start — press Reset ALL to begin again"
+            : on ? "Connected — press to disconnect" : "Connect this side's cube";
+    b.disabled = ghostMode || (connLock && !on);
   }
   q("btnConn").onclick = async () => {
     if(!conn){ connect(); return; }
@@ -3135,16 +3125,8 @@ function makeSide(root, sroot, key, ctl){
       clearSplits(); render();
       ctl.onDone(key);
     },
-    setGhost: (on, label) => {           // a ghost has no cube of its own to set up
-      ghostMode = !!on;
-      ["btnSolved","btnRecalc","btnGive"].forEach(c => {
-        const el = q(c); if(el) el.disabled = ghostMode;
-      });
-      paintConn();
-      setStatus(on ? (label || "Ghost Loaded") : (conn ? "Connected" : "Not connected"),
-                on || conn ? "on" : "");
-      render();
-    },
+    /* side B can only join before a mode has been settled on */
+    lockConn: v => { connLock = !!v; paintConn(); },
     redrawTime: () => {          // the digits setting changed
       if(phase === SOLVING) return;                       // the tick will catch up on its own
       if(phase === DONE && result && !result.dnf){ showTime(result.ms, "done"); showMeta(result); }
@@ -3202,18 +3184,8 @@ SIDES.A = makeSide(document.querySelector('.side[data-k="A"]'),
 SIDES.B = makeSide(document.querySelector('.side[data-k="B"]'),
                    document.querySelector('.setside[data-k="B"]'), "B", ctl);
 
-/* The ghost is side B's business, so its controls sit with side B: loading a file
-   down in B's cube panel, and — once one is loaded — the solve picker and the way
-   out up in the row above B's cube. */
-(function placeGhostControls(){
-  const top = document.querySelector('.side[data-k="B"] .sidetop');
-  top.querySelector(".ghostload").appendChild($("btnGhost"));   // Load, just right of B's Connect
-  document.querySelector('.side[data-k="B"] .pickrow').appendChild($("selGhostNo"));
-  top.appendChild($("btnGhostOff"));
-  document.querySelector('.setside[data-k="B"] .ghostslot').appendChild($("selGhostSes"));
-  document.querySelector('.setside[data-k="A"] .ghostrow').style.display = "none";
-  document.querySelector('.setside[data-k="B"] .ghostrow').style.display = "none";  // until a file is read
-})();
+/* The scramble picker sits under side B's cube. */
+document.querySelector('.side[data-k="B"] .pickrow').appendChild($("selGhostNo"));
 
 /** a round is under way while either cube is still scrambling, waiting or solving */
 const inPlay = () => ["A","B"].some(k => {
@@ -3281,9 +3253,9 @@ function paintHead(){
      round is on it is the way to drop that round instead */
   /* what the button offers depends on who is entered: nothing without a cube on
      the left, a lone run with only A, a battle once B has a cube or a ghost */
-  const ready = aHasCube(), two = bHasCube() || !!ghost;
+  const ready = aHasCube(), two = bHasCube();
   $("btnBattle").disabled = !busy && !ready;
-  const first = !log.length && !lastSeq;        // after the first round it is just the next scramble
+  const first = !mode;                          // after the first round it is just the next scramble
   $("btnBattle").textContent = busy ? "RESET" : !ready ? "START"
                              : !first ? "NEW SCRAMBLE" : two ? "BATTLE" : "SINGLE";
   $("btnBattle").className = "battle" + (busy ? " rst" : "");
@@ -3381,6 +3353,15 @@ $("btnSortKey").onclick = () => {
   paintSort(); paintResults();
 };
 $("btnSortDir").onclick = () => { sortAsc = !sortAsc; paintSort(); paintResults(); };
+/* the standard-orientation scramble of a round, worked out once and kept */
+function roundScramble(r){
+  if(r._scr != null) return r._scr;
+  const res = r.a || r.b;
+  if(!res || !res.st0 || !solverInit()) return "";
+  const path = pathBetween(SOLVED, res.st0);
+  r._scr = path ? path.join(" ") : "";
+  return r._scr;
+}
 function paintResults(){
   if(!log.length){ $("resWrap").innerHTML = '<div class="empty">No rounds yet.</div>'; return; }
   const sp = r => (r && !r.dnf) ? `${fmt(r.cross)} / ${fmt(r.f2l)} / ${fmt(r.oll)} / ${fmt(r.pll)}` : "";
@@ -3388,27 +3369,47 @@ function paintResults(){
   const cell = res => !res ? "—" : res.dnf ? "DNF" : fmt(res.ms);
   const mvtps = res => (res && !res.dnf && res.ms && res.moves)
     ? `${res.moves} / ${(res.moves / (res.ms/1000)).toFixed(2)}` : "—";
-  const rows = sortedRounds().map(i => {
-    const r = log[i], w = wonBy(r);
-    return `<tr><td class="del" data-i="${i}" title="Click the number to delete this round (both times)">${roundLabel(i)}</td>`
-         + `<td class="${w === "A" ? "win" : ""}">${cell(r.a)}</td><td>${mvtps(r.a)}</td><td class="sp">${sp(r.a)}</td>`
-         + `<td class="${w === "B" ? "win" : ""}">${cell(r.b)}</td><td>${mvtps(r.b)}</td><td class="sp">${sp(r.b)}</td>`
-         + `<td>${w || "—"}</td></tr>`;
-  }).join("");
-  /* the top row holds averages: totals of a practice session say very little */
-  const w = wins();
+  const numCell = i => `<td class="del" data-i="${i}" title="Click the number to delete this round">${roundLabel(i)}</td>`;
   const done = k => log.map(r => r[k]).filter(r => r && !r.dnf && r.ms);
   const mean = (list, f) => list.length ? list.reduce((t,x) => t + f(x), 0) / list.length : null;
   const avTime = k => { const v = done(k); return v.length ? fmt(mean(v, r => r.ms)) : "—"; };
   const avMv = k => { const v = done(k); return v.length ? (mean(v, r => r.moves || 0)).toFixed(1) : "—"; };
   const avSp = k => { const v = done(k); return v.length
       ? ["cross","f2l","oll","pll"].map(f => fmt(mean(v, r => r[f] || 0))).join(" / ") : ""; };
-  $("resWrap").innerHTML = `<table>
-    <thead><tr><th>Round</th><th>A — time</th><th>A — moves / TPS</th><th>A — cross / F2L / OLL / PLL</th>
-      <th>B — time</th><th>B — moves / TPS</th><th>B — cross / F2L / OLL / PLL</th><th>Won</th></tr></thead>
-    <tbody><tr class="tot"><td>Average (${log.length})</td><td>${avTime("a")}</td><td>${avMv("a")} / ${avgTps("a")}</td><td class="sp">${avSp("a")}</td>
-      <td>${avTime("b")}</td><td>${avMv("b")} / ${avgTps("b")}</td><td class="sp">${avSp("b")}</td><td>${w.a} — ${w.b}</td></tr>
-      ${rows}</tbody></table>`;
+
+  if(mode !== "battle"){
+    /* on your own there is only one player to show, and the scramble goes on the
+       same line as the time it was set for */
+    const rows = sortedRounds().map(i => {
+      const r = log[i];
+      return `<tr>${numCell(i)}<td>${cell(r.a)}</td><td>${mvtps(r.a)}</td>`
+           + `<td class="sp">${sp(r.a)}</td><td class="sp scr">${esc(roundScramble(r))}</td></tr>`;
+    }).join("");
+    $("resWrap").innerHTML = `<table>
+      <thead><tr><th>Round</th><th>time</th><th>moves / TPS</th>
+        <th>cross / F2L / OLL / PLL</th><th class="scr">scramble</th></tr></thead>
+      <tbody><tr class="tot"><td>Average (${log.length})</td><td>${avTime("a")}</td>
+        <td>${avMv("a")} / ${avgTps("a")}</td><td class="sp">${avSp("a")}</td><td class="scr"></td></tr>
+        ${rows}</tbody></table>`;
+  } else {
+    /* a battle takes two lines per round: the scramble over the two players' times */
+    const w = wins();
+    const rows = sortedRounds().map(i => {
+      const r = log[i], won = wonBy(r);
+      return `<tr class="scrrow"><td class="del" data-i="${i}" title="Click the number to delete this round (both times)">${roundLabel(i)}</td>`
+           + `<td class="sp" colspan="7">${esc(roundScramble(r))}</td></tr>`
+           + `<tr class="dat"><td></td>`
+           + `<td class="${won === "A" ? "win" : ""}">${cell(r.a)}</td><td>${mvtps(r.a)}</td><td class="sp">${sp(r.a)}</td>`
+           + `<td class="${won === "B" ? "win" : ""}">${cell(r.b)}</td><td>${mvtps(r.b)}</td><td class="sp">${sp(r.b)}</td>`
+           + `<td>${won || "—"}</td></tr>`;
+    }).join("");
+    $("resWrap").innerHTML = `<table>
+      <thead><tr><th>Round</th><th>A — time</th><th>A — moves / TPS</th><th>A — cross / F2L / OLL / PLL</th>
+        <th>B — time</th><th>B — moves / TPS</th><th>B — cross / F2L / OLL / PLL</th><th>Won</th></tr></thead>
+      <tbody><tr class="tot"><td>Average (${log.length})</td><td>${avTime("a")}</td><td>${avMv("a")} / ${avgTps("a")}</td><td class="sp">${avSp("a")}</td>
+        <td>${avTime("b")}</td><td>${avMv("b")} / ${avgTps("b")}</td><td class="sp">${avSp("b")}</td><td>${w.a} — ${w.b}</td></tr>
+        ${rows}</tbody></table>`;
+  }
   $("resWrap").querySelectorAll("td.del").forEach(el =>    // the whole log is here, so old rounds can go from this table
     el.onclick = () => deleteRound(+el.dataset.i));
 }
@@ -3417,9 +3418,17 @@ function paintResults(){
    nobody on the right it is a single entry: then the scrambles are numbered, so
    any of them can be gone at again — against the best time on it so far. */
 let aForce = false, bForce = false;          // testing only: pretend a cube is on that side
+/* One mode per session. The very first press of the big button settles it: with
+   a cube on side B it is a battle, otherwise it is a single entry. From then on
+   side B cannot join or leave — Reset ALL is the way back to the start. */
+let mode = null;                             // null = nothing chosen yet, then "single" or "battle"
 const aHasCube = () => aForce || SIDES.A.connected();
-const bHasCube = () => !ghost && (bForce || SIDES.B.connected());   // a loaded ghost takes B's place
-const isSolo = () => !ghost && !bHasCube();
+const bHasCube = () => mode === "single" ? false : (bForce || SIDES.B.connected());
+const isSolo = () => !bHasCube();
+function lockMode(){
+  if(!mode) mode = bHasCube() ? "battle" : "single";
+  SIDES.B.lockConn(true);
+}
 let curScr = 0, curScrGn = null;             // the numbered scramble up now (0 = a plain round)
 
 function startRound(seq, rec, no, gn){
@@ -3452,13 +3461,11 @@ function startRound(seq, rec, no, gn){
       : `Scramble ${no}: turn it and go. Same Scramble afterwards puts your own best beside you.`);
 }
 /* ---- the numbered scrambles ----
-   In ghost mode they are the solves of the file that was read; on your own they
-   are the ones this session has made. Either way number 2 always means the same
-   scramble, and the time to beat on it is the best there is — the recording, or
-   your own once you have bettered it. */
-const listLen = () => ghost ? ghost.solves.length : scrList.length;
-const gnOf    = () => ghost ? ghost.name : SOLO;
-const scrOf   = n => ghost ? (ghost.solves[n-1] && ghost.solves[n-1].scr) : scrList[n-1];
+   On your own the scrambles this session has made are numbered, so number 2
+   always means the same scramble, and the time to beat on it is your own best. */
+const listLen = () => scrList.length;
+const gnOf    = () => SOLO;
+const scrOf   = n => scrList[n-1];
 /** the player's own best go at scramble n */
 function myBest(n){
   let best = null;
@@ -3472,29 +3479,20 @@ function myBest(n){
 }
 /** what the right-hand cube replays on scramble n */
 function bestFor(n){
-  const rec = ghost ? ghost.solves[n-1] : null;
   const mine = myBest(n);
-  if(mine && (!rec || rec.dnf || mine.ms < rec.ms))
-    return {dnf: false, ms: mine.ms, mine: true, src: mine,
-            scr: (scrOf(n) || []).slice(),
-            moves: (mine.mvRaw && mine.mvRaw.length)
-                   ? mine.mvRaw.map(e => ({m: e[0], t: e[1]})) : null};
-  return rec;
+  if(!mine) return null;
+  return {dnf: false, ms: mine.ms, mine: true, src: mine,
+          scr: (scrOf(n) || []).slice(),
+          moves: (mine.mvRaw && mine.mvRaw.length)
+                 ? mine.mvRaw.map(e => ({m: e[0], t: e[1]})) : null};
 }
 function startNumbered(n){
   const seq = scrOf(n); if(!seq) return;
-  if(ghost) ghost.idx = n;
   startRound(seq.slice(), bestFor(n), n, gnOf());
 }
 function nextRound(){
-  if(ghost){
-    const n = nextGhostNo();             // the lowest-numbered solve that has not been raced yet
-    if(!n){ ctl.msg("Every recorded solve has been raced. Pick a number to go at one of them again, "
-                  + "or load another file.", "err"); return; }
-    startNumbered(n);
-    return;
-  }
-  if(bHasCube()){                        // two cubes: one scramble, both sides, as before
+  lockMode();
+  if(bHasCube()){                        // two cubes: one scramble, both sides
     startRound(makeScramble(scrLen));
     return;
   }
@@ -3503,14 +3501,13 @@ function nextRound(){
 }
 const ghostPlayed = n => log.some(r => sameGhost(r, n, gnOf()));
 function nextGhostNo(){
-  if(!ghost) return 0;
-  for(let i = 1; i <= ghost.solves.length; i++) if(!ghostPlayed(i)) return i;
+  for(let i = 1; i <= listLen(); i++) if(!ghostPlayed(i)) return i;
   return 0;
 }
 let ghostNoSig = "";
 function paintGhostNo(){
   const sel = $("selGhostNo");
-  if(!listLen() || (!ghost && bHasCube())){ sel.style.display = "none"; ghostNoSig = ""; return; }
+  if(!listLen() || bHasCube()){ sel.style.display = "none"; ghostNoSig = ""; return; }
   sel.style.display = "";
   const bests = Array.from({length: listLen()}, (_,i) => bestFor(i+1));
   const sig = gnOf() + "|" + listLen() + "|"
@@ -3530,6 +3527,7 @@ function paintGhostNo(){
 }
 $("selGhostNo").onchange = () => {
   if(inPlay()){ paintGhostNo(); return; }
+  lockMode();
   startNumbered(+$("selGhostNo").value);
 };
 /** play the very same round again — same scramble, and the same recorded solve */
@@ -3595,27 +3593,12 @@ function roundStep(){
         + `  A ${w.a} — ${w.b} B.  Press New Scramble.`, "ok");
 }
 /* ============================================================
-   Racing a recorded opponent (a "ghost")
-   A csTimer file is read, and one of its solves becomes the right-hand player:
-   the same scramble is set for both, and once this side starts turning, the
-   ghost's cube replays its own moves at the times they were recorded.
+   Racing your own best (a "ghost")
+   Once a scramble has been solved, the best time on it can be put up beside you:
+   side B's cube replays those very moves at the times they were recorded.
    ============================================================ */
 const esc = t => String(t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
-let ghost = null;            // {name, solves, idx, cur}
-let ghostTimers = [];
-function stopGhost(){ ghostTimers.forEach(clearTimeout); ghostTimers = []; }
-
-/** "U@0 L'@126 …" → [{m:"U", t:0}, …] */
-function parseGhostMoves(str){
-  const out = [];
-  for(const part of String(str).trim().split(/\s+/)){
-    const m = /^([URFDLB]['2]?)@(\d+)$/.exec(part);
-    if(!m) return null;
-    if(!MV[m[1]]) return null;
-    out.push({m:m[1], t:+m[2]});
-  }
-  return out.length ? out : null;
-}
+/** a scramble typed in by hand: plain face turns only */
 const scrambleTokens = str => {
   const out = [];
   for(const t of String(str).trim().split(/\s+/)){
@@ -3625,80 +3608,8 @@ const scrambleTokens = str => {
   }
   return out;
 };
-/** csTimer's own file: one array per session, each solve [[pen,ms], scramble, …] */
-function parseCsTimer(text){
-  const d = JSON.parse(text);
-  let sd = {};
-  try{ sd = JSON.parse((d.properties && d.properties.sessionData) || "{}"); }catch(e){ sd = {}; }
-  const out = [];
-  Object.keys(d).filter(k => /^session\d+$/.test(k)).forEach(k => {
-    const idx = k.slice(7);
-    const rows = (d[k] || []).slice();           // every row, kept as it was written
-    const solves = [];
-    rows.forEach((r, ri) => {
-      if(!Array.isArray(r) || !Array.isArray(r[0])) return;
-      const scr = scrambleTokens(r[1] || "");
-      if(!scr || !scr.length) return;            // without a scramble there is nothing to match
-      const pen = r[0][0], ms = r[0][1];
-      solves.push({
-        dnf: pen === -1,
-        ms: pen === 2000 ? ms + 2000 : ms,
-        scr: scr,
-        ri: ri,                                  // where this solve sits in the original file
-        moves: (r.length > 4 && r[4] && r[4][0]) ? parseGhostMoves(r[4][0]) : null
-      });
-    });
-    if(solves.length) out.push({name: (sd[idx] && sd[idx].name) || k, solves: solves, rows: rows});
-  });
-  return out;
-}
-let ghostFile = [];
-$("btnGhost").onclick = () => $("fileGhost").click();
-$("fileGhost").onchange = e => {
-  const f = e.target.files && e.target.files[0]; if(!f) return;
-  const rd = new FileReader();
-  rd.onload = () => {
-    let sessions = [];
-    try{ sessions = parseCsTimer(String(rd.result)); }
-    catch(err){ ctl.msg("That file could not be read as a csTimer export.", "err"); return; }
-    if(!sessions.length){ ctl.msg("No usable solves in that file (each one needs a scramble).", "err"); return; }
-    ghostFile = sessions;
-    $("selGhostSes").innerHTML = sessions.map((s,i) =>
-      `<option value="${i}">${esc(s.name)} (${s.solves.length})</option>`).join("");
-    $("selGhostSes").style.display = "";
-    $("btnGhostOff").style.display = "";
-    document.querySelector('.setside[data-k="B"] .ghostrow').style.display = "";
-    useGhost(0);
-  };
-  rd.readAsText(f);
-  e.target.value = "";
-};
-function useGhost(i){
-  const ses = ghostFile[i]; if(!ses) return;
-  stopGhost();
-  ghost = {name: ses.name, solves: ses.solves, rows: ses.rows, idx: 0, cur: null, curNo: 0};
-  ghostNoSig = "";
-  SIDES.B.setGhost(true);
-  SIDES.A.idle(); SIDES.B.idle();
-  document.querySelector('.setside[data-k="B"] .ghostinfo').textContent =
-    ses.name + " — " + ses.solves.length + " solve(s)";
-  paintHead(); paintTimes();
-  ctl.msg(`Ghost loaded: “${ses.name}”, ${ses.solves.length} solve(s). Press the big button for the first one `
-        + "still to be raced, or pick a number yourself — you are on the left.", "ok");
-}
-$("selGhostSes").onchange = () => useGhost(+$("selGhostSes").value);
-function leaveGhost(quiet){
-  stopGhost(); ghost = null; ghostSolve = null; ghostNoSig = "";
-  SIDES.B.setGhost(false);
-  SIDES.A.idle(); SIDES.B.idle();
-  $("selGhostSes").style.display = "none";
-  $("btnGhostOff").style.display = "none";
-  document.querySelector('.setside[data-k="B"] .ghostrow').style.display = "none";
-  document.querySelector('.setside[data-k="B"] .ghostinfo').textContent = "";
-  paintHead(); paintTimes();
-  if(!quiet) ctl.msg("Back to two cubes.");
-}
-$("btnGhostOff").onclick = () => leaveGhost();
+let ghostTimers = [];
+function stopGhost(){ ghostTimers.forEach(clearTimeout); ghostTimers = []; }
 
 
 /* ---- csTimer export, one player at a time ----
@@ -3800,36 +3711,7 @@ const mvLineOf = list => list.map(e => {
   return t.endsWith("2") ? (t[0] + "@" + ms + " " + t[0] + "@" + ms) : (t + "@" + ms);
 }).join(" ");
 
-/* ---- writing a ghost file back out ----
-   The file that was read is the base. Where the player has bettered one of its
-   solves, that row is replaced by his own — same scramble text, his time and his
-   moves. Every other row, raced or not, goes out exactly as it came in. */
-function exportGhostFile(){
-  const rows = (ghost.rows || []).slice();
-  let n = 0;
-  ghost.solves.forEach((s, i) => {
-    const mine = myBest(i + 1);
-    if(!mine) return;
-    if(!s.dnf && mine.ms >= s.ms) return;        // the recording still holds
-    const orig = rows[s.ri] || [];
-    const e = [[0, Math.round(mine.ms)], orig[1] || "",
-               "Cube Timer — beat " + (s.dnf ? "a DNF" : fmt(s.ms) + " s"),
-               Math.round(((mine.t || Date.now()) - (mine.ms || 0)) / 1000)];
-    if(mine.mvRaw && mine.mvRaw.length) e.push([mvLineOf(mine.mvRaw), "333"]);
-    rows[s.ri] = e;
-    n++;
-  });
-  const out = {session1: rows,
-               properties: {sessionData: JSON.stringify({1:{name: ghost.name, opt:{}, rank:1}}),
-                            sessionN: 1, session: 1}};
-  showOut("cstimer_" + ghost.name.replace(/[^\w\-]+/g, "_") + "_" + stamp() + ".txt",
-          "Ghost file for csTimer", JSON.stringify(out));
-  ctl.msg(n ? `Ghost file written out with ${n} of its solve(s) replaced by your better times `
-            + `(${rows.length - n} left as they were).`
-            : "Ghost file written out unchanged — none of its times have been bettered yet.", "ok");
-}
 function exportSide(k){
-  if(ghost && k === "A"){ exportGhostFile(); return; }
   /* every go is written out, the several tries at one scramble included, unless
      “Only best score” is ticked — then one scramble leaves one solve behind */
   const kept = SIDES[k].bestOnly() ? exportRounds() : log.slice();
@@ -3958,6 +3840,7 @@ $("btnSetGo").onclick = () => {
   }
   if(!aHasCube()){ ctl.msg("Connect side A's cube first.", "err"); return; }
   openSet(false);
+  lockMode();
   if(bHasCube()){ startRound(seq); return; }      // two cubes: a plain round
   scrList.push(seq.slice());                      // on your own it becomes the next numbered scramble
   startNumbered(scrList.length);
@@ -3969,7 +3852,7 @@ $("btnSetGo").onclick = () => {
    thing out as a file, for another machine or for keeping. */
 const SAVE_KEY = "cb.session";
 const sessionData = () => ({v: 1, t: Date.now(), log: log, scrList: scrList,
-                            curScr: curScr, curScrGn: curScrGn});
+                            curScr: curScr, curScrGn: curScrGn, mode: mode});
 function saveSession(){
   const trim = n => {                 // if it will not fit, the oldest move lists go first
     const copy = JSON.parse(JSON.stringify(sessionData()));
@@ -3988,31 +3871,14 @@ function applySession(d, where){
   log = d.log;
   scrList = (d.scrList || []).map(x => x.slice());
   curScr = d.curScr || 0; curScrGn = d.curScrGn || null;
+  mode = d.mode || (log.length ? (log.some(r => r.g == null) ? "battle" : "single") : null);
+  if(mode) SIDES.B.lockConn(true);
   round = log.length; lastSeq = curScr ? (scrOf(curScr) || null) : null;
   ghostNoSig = "";
   paintHead(); paintTimes(); paintResults();
   ctl.msg(log.length + " round(s) loaded from " + where + ". Reset ALL clears them.", "ok");
   return true;
 }
-$("btnSave").onclick = () => {
-  if(!log.length){ ctl.msg("There is nothing to save yet.", "err"); return; }
-  showOut("cubetimer_session_" + stamp() + ".json", "Session", JSON.stringify(sessionData()));
-  ctl.msg("Session written out (" + log.length + " round(s)).", "ok");
-};
-$("btnLoad").onclick = () => $("fileSess").click();
-$("fileSess").onchange = async e => {
-  const f = e.target.files && e.target.files[0]; e.target.value = "";
-  if(!f) return;
-  if(log.length && !await ask("Load this session?",
-        "The " + log.length + " round(s) on screen will be replaced.")) return;
-  const rd = new FileReader();
-  rd.onload = () => {
-    let d = null;
-    try{ d = JSON.parse(String(rd.result)); }catch(err){ ctl.msg("That file could not be read.", "err"); return; }
-    if(applySession(d, "the file")) saveSession();
-  };
-  rd.readAsText(f);
-};
 function resetRound(){
   if(waitTimer){ clearInterval(waitTimer); waitTimer = null; }
   stopGhost();
@@ -4030,9 +3896,9 @@ $("btnReset").onclick = async () => {
         + "The cubes stay connected.\nThis cannot be undone.")) return;
   if(waitTimer){ clearInterval(waitTimer); waitTimer = null; }
   stopGhost(); ghostSolve = null;
-  if(ghost) ghost.idx = 0;
   log = []; round = 0;
   scrList = []; curScr = 0; curScrGn = null; lastSeq = null; ghostNoSig = "";   // the numbering starts over too
+  mode = null; SIDES.B.lockConn(false);    // back to the start: side B may join again
   try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
   SIDES.A.idle(); SIDES.B.idle();          // idle only clears the round, never the connection
   paintHead(); paintTimes(); paintResults();
@@ -4076,7 +3942,7 @@ paintHead(); paintResults(); paintTimes(); paintEngine();
 window.__battle = {A: SIDES.A, B: SIDES.B,
   joinA: v => { aForce = !!v; paintHead(); },      // stand in for the cubes
   joinB: v => { bForce = !!v; paintHead(); },
-  state: () => ({round: round, inPlay: inPlay(), log: log,
+  state: () => ({round: round, inPlay: inPlay(), log: log, mode: mode,
                  ghostNo: curScr || null,
                  solo: isSolo(), scrNo: curScr, scrN: scrList.length,
                  pa: SIDES.A.phase(), pb: SIDES.B.phase()})};
