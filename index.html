@@ -26,9 +26,6 @@
   .topbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
   .topbar .opt{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
   .spacer{flex:1}
-  .wake{border-radius:10px}
-  .wake.on{background:var(--ok);border-color:var(--ok);color:#06121f;font-weight:bold}
-  .wake.ng{color:var(--warn);border-color:var(--warn)}
 
   .msg{font-size:12px;min-height:18px;margin:0 0 10px;color:var(--warn)}
   .msg.err{color:var(--err)} .msg.ok{color:var(--ok)}
@@ -176,6 +173,19 @@
   td.del{cursor:pointer}
   td.del:hover{color:var(--err);text-decoration:line-through}
   .empty{font-size:12px;color:var(--muted)}
+
+  #modal{position:fixed;inset:0;background:rgba(6,8,12,.72);z-index:50;
+    display:flex;align-items:center;justify-content:center;padding:20px}
+  .mbox{background:var(--panel);border:1px solid var(--line);border-top:5px solid var(--accent);
+    border-radius:14px;padding:16px;width:min(760px,100%);max-height:86vh;
+    display:flex;flex-direction:column;gap:10px;box-shadow:0 18px 60px rgba(0,0,0,.5)}
+  .mtitle{font-size:15px;font-weight:bold}
+  .mtext{font-size:13px;color:var(--muted);white-space:pre-wrap}
+  .mout{flex:1;min-height:30vh;background:var(--bg);color:var(--fg);border:1px solid var(--line);
+    border-radius:10px;padding:10px;font-family:ui-monospace,Menlo,Consolas,monospace;
+    font-size:12px;line-height:1.45;white-space:pre;overflow:auto}
+  .mrow{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+  .mrow button{min-width:96px}
 </style>
 </head>
 <body>
@@ -195,10 +205,25 @@
   <input type="file" id="fileGhost" accept=".txt,.json,text/*" style="display:none">
   <span class="spacer"></span>
   <span class="opt" id="engineInfo">Engine preparing…</span>
-  <button id="btnWake" class="wake">Screen On</button>
 </div>
 
 <div class="msg" id="msg"></div>
+
+<!-- asking and showing: the page does its own dialogs, since a browser's own
+     ones and its downloads are not to be relied on everywhere -->
+<div id="modal" style="display:none">
+  <div class="mbox">
+    <div class="mtitle"></div>
+    <div class="mtext"></div>
+    <textarea class="mout" readonly spellcheck="false"></textarea>
+    <div class="mrow">
+      <button id="mCopy" class="primary">Copy</button>
+      <button id="mDl">Download</button>
+      <button id="mOk" class="primary">OK</button>
+      <button id="mNo">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <div class="board">
   <section class="side" data-k="A"></section>
@@ -3691,6 +3716,60 @@ function csTimerSolve(res){
   if(res.mv) e.push([res.mv, "333"]);
   return e;
 }
+/* ---- the page's own dialogs ----
+   A browser can refuse to show its own confirm box and can refuse to save a file
+   the page hands it — that is what iPads do. So the asking and the handing over
+   both happen inside the page: ask() puts a question up, and showOut() puts the
+   text itself up, to be copied or, where it works, downloaded. */
+const M = {box: null, text: "", name: ""};
+function closeModal(){ $("modal").style.display = "none"; }
+function ask(title, text){
+  return new Promise(res => {
+    $("modal").style.display = "flex";
+    $("modal").querySelector(".mtitle").textContent = title;
+    $("modal").querySelector(".mtext").textContent = text || "";
+    $("modal").querySelector(".mout").style.display = "none";
+    $("mCopy").style.display = "none"; $("mDl").style.display = "none";
+    $("mOk").style.display = ""; $("mNo").style.display = "";
+    $("mOk").textContent = "OK";
+    const done = v => { closeModal(); $("mOk").onclick = $("mNo").onclick = null; res(v); };
+    $("mOk").onclick = () => done(true);
+    $("mNo").onclick = () => done(false);
+  });
+}
+/** the finished text, there to be copied — and downloaded where the browser allows it */
+function showOut(name, title, text){
+  M.text = text; M.name = name;
+  $("modal").style.display = "flex";
+  $("modal").querySelector(".mtitle").textContent = title;
+  $("modal").querySelector(".mtext").textContent =
+    "Copy takes the whole thing to the clipboard — paste it into Notes or Mail to keep it. "
+    + "Download saves it as " + name + " (it does nothing on an iPad, where saving from a page is not allowed).";
+  const out = $("modal").querySelector(".mout");
+  out.style.display = ""; out.value = text;
+  $("mCopy").style.display = ""; $("mDl").style.display = "";
+  $("mOk").style.display = ""; $("mNo").style.display = "none";
+  $("mOk").textContent = "Close";
+  $("mOk").onclick = () => closeModal();
+}
+$("mCopy").onclick = async () => {
+  const out = $("modal").querySelector(".mout");
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(M.text);
+    else throw new Error("no clipboard");
+    $("mCopy").textContent = "Copied"; setTimeout(() => { $("mCopy").textContent = "Copy"; }, 1500);
+  }catch(e){
+    out.focus(); out.select();
+    try{ document.execCommand("copy"); $("mCopy").textContent = "Copied"; }
+    catch(e2){ $("mCopy").textContent = "Press ⌘C / long-press"; }
+    setTimeout(() => { $("mCopy").textContent = "Copy"; }, 2500);
+  }
+};
+$("mDl").onclick = () => saveFile(M.name, M.text);
+document.addEventListener("keydown", e => {
+  if(e.key === "Escape" && $("modal").style.display !== "none") closeModal();
+});
+
 function saveFile(name, text){
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([text], {type:"text/plain"}));
@@ -3743,7 +3822,8 @@ function exportGhostFile(){
   const out = {session1: rows,
                properties: {sessionData: JSON.stringify({1:{name: ghost.name, opt:{}, rank:1}}),
                             sessionN: 1, session: 1}};
-  saveFile("cstimer_" + ghost.name.replace(/[^\w\-]+/g, "_") + "_" + stamp() + ".txt", JSON.stringify(out));
+  showOut("cstimer_" + ghost.name.replace(/[^\w\-]+/g, "_") + "_" + stamp() + ".txt",
+          "Ghost file for csTimer", JSON.stringify(out));
   ctl.msg(n ? `Ghost file written out with ${n} of its solve(s) replaced by your better times `
             + `(${rows.length - n} left as they were).`
             : "Ghost file written out unchanged — none of its times have been bettered yet.", "ok");
@@ -3761,7 +3841,7 @@ function exportSide(k){
   out.session1 = list.map(csTimerSolve);
   out.properties = {sessionData: JSON.stringify({1:{name:"Cube Timer " + k, opt:{}, rank:1}}),
                     sessionN: 1, session: 1};
-  saveFile("cstimer_" + k + "_" + stamp() + ".txt", JSON.stringify(out));
+  showOut("cstimer_" + k + "_" + stamp() + ".txt", "Side " + k + " for csTimer", JSON.stringify(out));
   ctl.msg("Side " + k + ": " + list.length + " solve(s) written for csTimer."
         + (dropped ? "  " + dropped + " slower go(es) at a scramble already in the file were left out." : ""), "ok");
 }
@@ -3813,7 +3893,7 @@ function textReport(k){
   lines.push("", head, "-".repeat(Math.max.apply(null, body.concat(head).map(x => x.length))));
   lines.push.apply(lines, body);
   lines.push("");
-  saveFile("cubetimer_" + k + "_" + stamp() + ".txt", lines.join("\n"));
+  showOut("cubetimer_" + k + "_" + stamp() + ".txt", "Side " + k + " — round sheet", lines.join("\n"));
   ctl.msg("Side " + k + ": " + mine.length + " round(s) written out as text.", "ok");
 }
 
@@ -3831,12 +3911,14 @@ function playGhost(){
 }
 
 /** Wipe one round. Both sides' times go together — a single time is never removed. */
-function deleteRound(i){
+async function deleteRound(i){
   const r = log[i]; if(!r) return;
   const lab = roundLabel(i);
   const shown = res => !res ? "—" : res.dnf ? "DNF" : fmt(res.ms) + " s";
-  if(!confirm(`Delete round ${lab} (A ${shown(r.a)} / B ${shown(r.b)})?\n`
-            + "Both times go together and the round is counted as never played.")) return;
+  if(!await ask(`Delete round ${lab}?`,
+        `A ${shown(r.a)} / B ${shown(r.b)}\n`
+        + "Both times go together and the round is counted as never played.")) return;
+  if(!log[i]) return;
   log.splice(i, 1);
   round = log.length + (inPlay() ? 1 : 0);
   saveSession();
@@ -3914,14 +3996,15 @@ function applySession(d, where){
 }
 $("btnSave").onclick = () => {
   if(!log.length){ ctl.msg("There is nothing to save yet.", "err"); return; }
-  saveFile("cubetimer_session_" + stamp() + ".json", JSON.stringify(sessionData()));
+  showOut("cubetimer_session_" + stamp() + ".json", "Session", JSON.stringify(sessionData()));
   ctl.msg("Session written out (" + log.length + " round(s)).", "ok");
 };
 $("btnLoad").onclick = () => $("fileSess").click();
-$("fileSess").onchange = e => {
+$("fileSess").onchange = async e => {
   const f = e.target.files && e.target.files[0]; e.target.value = "";
   if(!f) return;
-  if(log.length && !confirm("Load this session?\nThe " + log.length + " round(s) on screen will be replaced.")) return;
+  if(log.length && !await ask("Load this session?",
+        "The " + log.length + " round(s) on screen will be replaced.")) return;
   const rd = new FileReader();
   rd.onload = () => {
     let d = null;
@@ -3938,17 +4021,22 @@ function resetRound(){
   ctl.msg("Round reset. The times already taken are kept — press the big button for a new scramble.");
 };
 /** Throw everything away and start from nothing */
-$("btnReset").onclick = () => {
-  if(log.length && !confirm(`Delete all ${log.length} round(s) and start again?\nThis cannot be undone.`)) return;
+/* Clearing the records leaves the cubes alone: they stay connected, and only
+   what has been played is thrown away — after the question has been answered. */
+$("btnReset").onclick = async () => {
+  if(!await ask("Delete every record?",
+        (log.length ? "All " + log.length + " round(s) and the scramble numbering go. "
+                    : "There are no rounds yet. ")
+        + "The cubes stay connected.\nThis cannot be undone.")) return;
   if(waitTimer){ clearInterval(waitTimer); waitTimer = null; }
   stopGhost(); ghostSolve = null;
   if(ghost) ghost.idx = 0;
   log = []; round = 0;
   scrList = []; curScr = 0; curScrGn = null; lastSeq = null; ghostNoSig = "";   // the numbering starts over too
   try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
-  SIDES.A.idle(); SIDES.B.idle();
+  SIDES.A.idle(); SIDES.B.idle();          // idle only clears the round, never the connection
   paintHead(); paintTimes(); paintResults();
-  ctl.msg("Everything cleared. Press the big button to begin again.", "ok");
+  ctl.msg("Every record cleared. The cubes are still connected — press the big button to begin again.", "ok");
 };
 
 /* --- settings --- */
@@ -3964,32 +4052,6 @@ $("selPrec").onchange   = () => {
   paintTimes(); paintResults();
   ["A","B"].forEach(k => SIDES[k].redrawTime());
 };
-
-/* --- keep the screen awake while a battle is running --- */
-(function(){
-  const btn = $("btnWake");
-  const supported = ("wakeLock" in navigator);
-  let lock = null, on = LS.get("wake","1") !== "0";
-  const mark = (cls, title) => { btn.className = "wake" + (cls ? " " + cls : ""); btn.title = title; };
-  async function acquire(){
-    if(!on) return;
-    if(!supported){ mark("ng", "This environment cannot keep the screen on"); return; }
-    if(lock) return;
-    try{
-      lock = await navigator.wakeLock.request("screen");
-      lock.addEventListener("release", () => { lock = null; });
-      mark("on", "The screen will stay on (press to turn this off)");
-    }catch(e){ lock = null; mark("ng", "Click the page to try again"); }
-  }
-  async function release(){ const l = lock; lock = null;
-    try{ if(l) await l.release(); }catch(e){} mark(null, "Keep the screen on"); }
-  btn.onclick = () => { on = !on; LS.set("wake", on ? "1" : "0"); on ? acquire() : release(); };
-  document.addEventListener("visibilitychange", () => {
-    if(document.visibilityState === "visible" && on && !lock) acquire(); });
-  mark(null, "Keep the screen on");
-  if(!supported) mark("ng", "This environment cannot keep the screen on");
-  else if(on) acquire();
-})();
 
 /* --- Esc stops the battle --- */
 document.addEventListener("keydown", e => { if(e.key === "Escape" && inPlay()) resetRound(); });
