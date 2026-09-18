@@ -2755,7 +2755,8 @@ function makeSide(root, sroot, key, ctl){
     const v = toView(state);
     for(let i=0;i<54;i++) cells3d[i].style.background = "var(--c" + v[i] + ")";
     const big = q("bigseq"), all = q("scrall");
-    if(!A.S.length){ big.innerHTML = ""; all.innerHTML = ""; lastLen = -1; }
+    if(!A.S.length && !A.rem.length && (phase === IDLE || phase === SCRAMBLE)){
+      big.innerHTML = ""; all.innerHTML = ""; lastLen = -1; }
     else if(scrambleDone()){
       big.innerHTML = '<div class="seqline"><span class="grp"><span class="msg">'
         + (phase === WAIT ? "Wait" : phase === READY ? "Ready" : phase === SOLVING ? "Timing"
@@ -2854,7 +2855,16 @@ function makeSide(root, sroot, key, ctl){
     let use = seq.slice();
     if(state !== SOLVED){          // e.g. after a give up: work out the way there from here
       const path = pathBetween(state, target);
-      if(path){ use = path; recalced = true; }
+      /* No path at all means the round would start from the wrong place and could
+         never be finished, so it is not begun: better to say so than to run a
+         clock that will not stop. */
+      if(!path){
+        ctl.msg("Side " + key + ": the way to this scramble could not be worked out from where the cube "
+              + "is now. Solve that cube, press “Reset cube”, and bring the scramble up again.", "err");
+        phase = IDLE; A = {S:[], rem:[]}; render();
+        return false;
+      }
+      use = path; recalced = true;      // an empty path means the cube already stands there
     }
     A = {S: use, rem: []}; buildRem();
     phase = SCRAMBLE; result = null; verdictText = ""; exactMs = null;
@@ -2867,6 +2877,12 @@ function makeSide(root, sroot, key, ctl){
     else if(lastShown){ showTime(lastShown.ms, ""); showMeta(lastShown); }
     else { showTime(0, ""); showMeta(null); clearSplits(); }
     render();
+    /* The cube is already standing in the scrambled position — after a round was
+       dropped and the same scramble picked again, say. There is nothing to turn,
+       so this side is ready at once; it waits a tick so that the other side is
+       set up first. */
+    if(scrambleDone()) setTimeout(() => { if(phase === SCRAMBLE && scrambleDone()) toWait(); }, 0);
+    return true;
   }
   /** this cube is scrambled; the other one may still be going */
   function toWait(){
@@ -3169,8 +3185,10 @@ const ctl = {
     const bIn = SIDES.B.phase() !== IDLE;
     if(SIDES.A.phase() === WAIT && (!bIn || SIDES.B.phase() === WAIT)){
       SIDES.A.setReady(); if(bIn) SIDES.B.setReady();
-      ctl.msg(bIn && bHasCube() ? "Both cubes are scrambled — turn to start."
-                                : "Scrambled — turn to start.", "ok");
+      ctl.msg((bIn && bHasCube() ? "Both cubes are scrambled — turn to start."
+                                 : "Scrambled — turn to start.")
+              + (ghostSolve && !bHasCube() && ghostSolve.ms
+                 ? "  The time to beat is " + fmt(ghostSolve.ms) + " s." : ""), "ok");
     }
   },
   otherDone: k => { const o = SIDES[k === "A" ? "B" : "A"]; return o && o.phase() === DONE; },
@@ -3432,12 +3450,14 @@ function lockMode(){
 let curScr = 0, curScrGn = null;             // the numbered scramble up now (0 = a plain round)
 
 function startRound(seq, rec, no, gn){
+  stopGhost();
+  /* the player's own cube is set up first: if the round cannot be begun from
+     where that cube is, nothing else is touched either */
+  if(!SIDES.A.startRound(seq)){ SIDES.B.idle(); paintHead(); paintTimes(); return; }
   round = log.length + 1;
   lastSeq = seq.slice();
   curScr = no || 0; curScrGn = no ? gn : null;
-  stopGhost();
   ghostSolve = rec || null;
-  SIDES.A.startRound(seq);
   if(rec){
     const target = seq.reduce((st,m) => applyMove(st,m), SOLVED);
     SIDES.B.ghostReady(target, (rec.mine ? "Your best " : "Ghost ") + fmt(rec.ms),
