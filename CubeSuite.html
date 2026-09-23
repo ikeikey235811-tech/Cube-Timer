@@ -500,9 +500,9 @@
 <!-- one tab per app; the left-most one is where everything is set up -->
 <div class="apptabs">
   <button class="appt on" data-a="setup">Settings</button>
-  <button class="appt" data-a="timer">TIMER</button>
   <button class="appt" data-a="oll">OLL</button>
   <button class="appt" data-a="pll">PLL</button>
+  <button class="appt" data-a="timer">TIMER</button>
   <button class="appt" data-a="stats">Stats</button>
 </div>
 
@@ -3733,8 +3733,9 @@ function makeSide(root, sroot, key, ctl){
       if(!adjacent(scrTopCol).includes(scrFrontCol)) scrFrontCol = adjacent(scrTopCol)[0];
       LS.set(key+".scrtop", scrTopCol); LS.set(key+".scrfront", scrFrontCol);
       paintVars(); render(); },
-    /* the cube on screen is shown in the scramble's grip while one is being turned */
-    scrView: v => { scrView = !!v; paintVars(); render(); },
+    /* the cube on screen is shown in the scramble's grip while one is being turned —
+       this is asked on every repaint, so nothing is redrawn unless it really changed */
+    scrView: v => { v = !!v; if(v === scrView) return; scrView = v; paintVars(); render(); },
     inScrView: () => scrView,
     note: (t, cls) => showText(t, cls),
     showMoves: (n, tps) => { showText(n + " moves", "done");
@@ -4610,14 +4611,16 @@ const lLabel = e => SIDES.A.scrTok(e.f + (e.kind === "double" ? "2" : e.kind ===
 /** put a way back up and start following it: from here on the turns are not studying,
     they are only putting the cube back, so nothing is written into the record */
 function setLine(moves){
-  if(!moves || !moves.length){ returning = false; return; }
+  if(!moves || !moves.length){ returning = false; syncView(); return; }
   L.S = moves.slice(); L.rem = L.S.map(t => lEntry(t, false)); L.lastLen = -1;
   returning = true; redoLen = -1;
+  syncView();
 }
 /** the cube is back where it started: the record starts afresh */
 function backHome(){
   returning = false; L.S = []; L.rem = [];
   hist = []; raw = [];
+  syncView();
 }
 /** the plain rewind, for when no way has been asked for */
 const rewindLine = () => (!setSt || SIDES.A.state() === setSt) ? [] : undoOf(hist);
@@ -4653,7 +4656,7 @@ function paintRedo(){
   redoLen = left;
   if(returning){
     const doneN = L.S.length - lLeft(), fixing = lFix();
-    all.innerHTML = L.S.map((t, k) => {
+    all.innerHTML = mark() + L.S.map((t, k) => {
       const c = k < doneN ? "done" : (k === doneN && !fixing) ? "now" : "";
       return `<span class="${c}">${esc(SIDES.A.scrTok(t))}</span>`;
     }).join(" ");
@@ -4664,11 +4667,13 @@ function paintRedo(){
     }).join("") + "</span></div>";
     return;
   }
-  all.innerHTML = plain.map((t, k) =>
-    `<span class="${k === 0 ? "now" : ""}">${esc(SIDES.A.scrTok(t))}</span>`).join(" ");
+  /* nothing was asked for: these are simply the turns undone, made where the cube
+     already stands, so they are written in the grip it is being held in */
+  all.innerHTML = gMark() + plain.map((t, k) =>
+    `<span class="${k === 0 ? "now" : ""}">${esc(SIDES.A.viewTok(t))}</span>`).join(" ");
   big.innerHTML = `<div class="seqline${cls}"><span class="grp">`
     + plain.slice(0,5).map((t,k) =>
-        `<span class="tok p${k}${k === 0 ? " nowtok" : ""}">${esc(SIDES.A.scrTok(t))}</span>`).join("")
+        `<span class="tok p${k}${k === 0 ? " nowtok" : ""}">${esc(SIDES.A.viewTok(t))}</span>`).join("")
     + `</span></div>`;
 }
 /** while the clock is on, the left says how many turns — and the speed once it stops */
@@ -4713,7 +4718,13 @@ function paintReadySolver(){
     if(mine === readySeq) draw(cxCache);
   }, 30);
 }
-function paintSeq(){ paintReadySolver();
+/** How the cube on screen is held. A line of turns is only useful if the cube in the
+    hand is held the way that line is written for, so the cube is drawn in the SCRAMBLE
+    grip whenever there is a worked-out way back on show — RESUME, recalculate, give up,
+    the line that goes up by itself after a solve, or the one Info puts up — and while a
+    new scramble is being turned. The rest of the time it is the solving grip. */
+function syncView(){ SIDES.A.scrView(mode === "scramble" || returning); }
+function paintSeq(){ syncView(); paintReadySolver();
                      if(mode === "scramble") return; paintTimerLine(); paintRedo(); }
 /** the big word under the cube while a way back is being followed: how far there is to go */
 const backWord = () => returning ? (lLeft() ? String(lLeft()) : "Set") : null;
