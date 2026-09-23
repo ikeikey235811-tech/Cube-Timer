@@ -217,6 +217,8 @@
      five turns at a time and fading to the right, exactly as a new scramble is. */
   .redobox{background:var(--panel2);border:1px solid var(--line);border-radius:12px;
     padding:6px 12px 4px;margin-top:16px}
+  .side.noclock .redobox{margin-top:8px}
+  .side.noclock .solvebox{margin-top:8px}
   .redobox .scrall{margin-top:2px}
   .side:not(.ownseq) .redobox{background:none;border:none;padding:0;margin-top:0}
   .side:not(.ownseq) .redohd{display:none}
@@ -227,6 +229,13 @@
 
   /* while the clock runs, the turn count stands right under the time */
   .tlinebox{text-align:center;min-height:26px;margin-top:2px}
+  /* nothing is being timed: the big figure counts the turns instead of the seconds,
+     and the word under it says where the cube stands */
+  .anword{display:none;text-align:center;font-size:22px;font-weight:bold;
+    letter-spacing:.08em;min-height:26px;margin-top:2px}
+  .anword.on{color:var(--warn)}
+  .side.noclock .anword{display:block}
+  .side.noclock .phasemsg, .side.noclock .scrtime{display:none}
   .tline{font-size:20px;font-weight:bold;color:var(--fg);font-variant-numeric:tabular-nums}
   .tabb.give{border-color:var(--err);color:var(--err)}
   /* ---- one tab per app, the settings one first ---- */
@@ -278,7 +287,10 @@
     border-radius:999px;padding:7px 13px}
   .viewopts label:hover{color:var(--fg);border-color:var(--accent)}
   .viewopts label.on{color:var(--fg);border-color:var(--accent);background:#16324d}
-  .tcubePanel{flex:0 1 auto;max-width:100%;padding-top:10px}
+  /* one fixed width: a long run of turns wraps onto another line inside the panel
+     instead of stretching it and carrying the cube sideways with it */
+  .tcubePanel{flex:0 0 auto;width:700px;max-width:100%;padding-top:10px}
+  .trainer.vTop .tcubePanel{width:1040px}
   .tcubeRow{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:center}
   .trainer .ttop{display:none}
   .trainer.vTop .ttop{display:block}
@@ -414,6 +426,14 @@
   .sttab td{padding:5px 10px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
   .sttab td.n{text-align:right;font-weight:bold}
   .sttab tr.today td{color:var(--ok)}
+  /* ---- everything as text ---- */
+  .savenote{font-size:12px;color:var(--muted);line-height:1.8;margin:2px 0 10px}
+  #saveBox{width:100%;height:440px;background:var(--panel2);color:var(--fg);
+    border:1px solid var(--line);border-radius:10px;padding:12px 14px;
+    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.6;
+    white-space:pre;overflow:auto}
+  .savemsg{font-size:13px;color:var(--muted)}
+  .savemsg.ok{color:var(--ok)} .savemsg.err{color:var(--err)}
   /* what each OLL or PLL case takes on average */
   .tavg{display:flex;flex-wrap:wrap;gap:8px}
   .tavgcard{display:flex;align-items:center;gap:9px;background:var(--panel2);
@@ -425,6 +445,48 @@
   .tavgcard .sub{font-size:10px;color:var(--muted)}
   .tavgcard.slow{border-color:var(--warn)}
   .tavgnone{font-size:13px;color:var(--muted)}
+  /* ---- the turns made, and the algorithms registered for the shape ---- */
+  .histBox{margin-top:12px}
+  .histLab{font-size:11px;color:var(--muted);margin-bottom:5px}
+  .hist{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:21px;letter-spacing:.06em;
+    min-height:34px;display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+  .hist .ph{font-size:13px;color:var(--muted);font-family:inherit;letter-spacing:0}
+  .hist .tk{color:var(--fg);padding-bottom:1px;border-bottom:2px solid transparent}
+  .hist .tk.ok{color:var(--ok)}                 /* on one of the registered ways */
+  .hist .tk.ng{color:var(--err)}                /* off it */
+  .hist .tk.auf{border-bottom-style:dotted;border-bottom-color:var(--muted)}
+  .hist .tk.auf2{color:#6fb4ff}                 /* the AUF at the end */
+  .hist .sep{color:var(--muted);font-size:15px}
+  .hist .sep2{color:var(--warn);font-size:17px;margin:0 2px}
+  .hist .brk{flex-basis:100%;height:0}          /* the OLL and the PLL on a line each */
+  .regPanel{flex:1 1 420px;min-width:330px}
+  .regHead .yes{color:var(--ok)} .regHead .no{color:var(--muted)}
+  .rlist{display:flex;flex-direction:column;gap:6px;max-height:210px;overflow:auto}
+  .ritem{display:flex;gap:8px;align-items:center;background:var(--panel2);
+    border:1px solid var(--line);border-radius:9px;padding:6px 9px}
+  .ritem .no{font-size:11px;color:var(--muted);min-width:64px}
+  .ritem .a{flex:1;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px}
+  .ritem .a .nm{font-family:inherit;font-size:11px;color:var(--warn);margin-left:8px}
+  .ritem .a .hid{font-family:inherit;font-size:12px;color:var(--muted)}
+  .rempty{font-size:12px;color:var(--muted);line-height:1.7}
+  .regTotal{font-size:11px;color:var(--muted)}
+  /* ---- the two windows registering uses ---- */
+  .algdlg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.66);z-index:60;
+    align-items:center;justify-content:center;padding:18px}
+  .algdlg.on{display:flex}
+  .algbox{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:20px 22px;max-width:560px;width:100%}
+  .algbox h3{margin:0 0 12px;font-size:19px}
+  .algbox .mline{font-size:13px;color:var(--muted);margin:3px 0}
+  .algbox .malg{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:24px;
+    letter-spacing:.06em;margin:12px 0;color:var(--ok)}
+  .algbox .mlab{display:block;font-size:12px;color:var(--muted);margin-top:12px}
+  .algbox input[type=text]{width:100%;margin-top:4px;background:var(--panel2);color:var(--fg);
+    border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:16px;
+    font-family:ui-monospace,Menlo,Consolas,monospace}
+  .algbox .mrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .edmsg{font-size:13px;min-height:20px;margin-top:10px;color:var(--muted)}
+  .edmsg.ok{color:var(--ok)} .edmsg.err{color:var(--err)}
   .tavghd{display:flex;align-items:center;gap:12px;margin-bottom:10px}
   .strow{display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
   .stmode{font-size:12px;padding:6px 14px;border-radius:9px}
@@ -502,11 +564,47 @@
   <button class="appt on" data-a="setup">Settings</button>
   <button class="appt" data-a="oll">OLL</button>
   <button class="appt" data-a="pll">PLL</button>
+  <button class="appt" data-a="full">OLL+PLL</button>
   <button class="appt" data-a="timer">TIMER</button>
   <button class="appt" data-a="stats">Stats</button>
+  <button class="appt" data-a="save">Save</button>
 </div>
 
 <div class="msg" id="msg"></div>
+
+<!-- ============ registering an algorithm ============ -->
+<div id="regModal" class="algdlg">
+  <div class="algbox">
+    <h3>Register this algorithm?</h3>
+    <div class="mline" id="rgPat">&mdash;</div>
+    <div class="mline" id="rgAuf">&mdash;</div>
+    <div class="malg" id="rgAlg">&mdash;</div>
+    <label class="mlab">Name (optional)
+      <input type="text" id="rgName" placeholder="e.g. Sune / right-hand" spellcheck="false"></label>
+    <div class="mrow">
+      <button class="primary" id="rgYes">Register (Y)</button>
+      <button id="rgNo">No (N)</button>
+      <button id="rgEdit">Write it myself first</button>
+    </div>
+  </div>
+</div>
+
+<div id="edModal" class="algdlg">
+  <div class="algbox">
+    <h3 id="edTitle">Write an algorithm</h3>
+    <div class="mline" id="edPat">&mdash;</div>
+    <label class="mlab">The turns
+      <input type="text" id="edText" placeholder="e.g. R U R' U R U2 R'" spellcheck="false"></label>
+    <label class="mlab">Name (optional)
+      <input type="text" id="edName" spellcheck="false"></label>
+    <div class="edmsg" id="edMsg">&nbsp;</div>
+    <div class="mrow">
+      <button id="edCheck">Check it</button>
+      <button class="primary" id="edSave">Check and save</button>
+      <button id="edCancel">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <div id="modal" style="display:none">
   <div class="mbox">
@@ -571,6 +669,10 @@
         style="width:120px"> <span class="rshd" id="retryNote"></span></div>
       <div class="rshd">Turning this on the cube counts as “try this case again”, in the
         OLL and PLL drills. Faces U R F D L B with ' or 2; blank turns it off.</div>
+      <div class="setline"><label><input type="checkbox" id="optShowAid" checked>
+        Show the registered algorithm in the drills</label></div>
+      <div class="setline"><label><input type="checkbox" id="optSlice" checked>
+        Write algorithms with M / r / f where they fit</label></div>
       <div class="setline"><button id="btnReset" class="danger">Clear ALL</button>
         <span class="rshd">every solve and the set scramble go</span></div>
     </section>
@@ -586,7 +688,8 @@
   </div>
 </div>
 
-<!-- ============ the OLL and PLL drills ============ -->
+<!-- ============ the three last-layer drills ============ -->
+
 <div class="apppane trainer vTimer" data-a="oll" style="display:none">
   <div class="tviewbar">Also show:<span class="viewopts"><label><input type="checkbox" class="toptTop"> Top view</label><label><input type="checkbox" class="toptTimer"> Timer</label></span></div>
   <div class="tgrid">
@@ -595,22 +698,26 @@
         <svg class="ttop" width="230" height="230" role="img" aria-label="Top view"></svg>
         <div class="tstage"><div class="tcube3d"></div></div>
       </div>
+      <div class="histBox">
+        <div class="histLab">Turns made &mdash; a turn undone disappears; the first one, dotted, is the AUF</div>
+        <div class="hist"></div>
+      </div>
     </div>
 
     <div class="panel tstatsPanel">
-      <div class="tcaseNo tcaseTitle">—</div>
+      <div class="tcaseNo tcaseTitle">&mdash;</div>
       <div class="tcaseSub">&nbsp;</div>
       <div class="tflash"></div>
       <h2>Moves (U2 / R2 count as 1)</h2>
       <div class="thuge tmoveCount">0</div>
       <dl class="tkv"><dt>Solved</dt><dd class="tsolvedCount">0</dd>
-        <dt>Remaining</dt><dd class="tremain">—</dd></dl>
+        <dt>Remaining</dt><dd class="tremain">&mdash;</dd></dl>
       <div class="ttimerBox">
         <h2>Time (s)</h2>
         <div class="thuge ttimeNow">0.00</div>
-        <dl class="tkv"><dt>Last</dt><dd class="ttimeLast">—</dd>
-          <dt>Best</dt><dd class="ttimeBest">—</dd>
-          <dt>Average (last 5)</dt><dd class="ttimeAo5">—</dd></dl>
+        <dl class="tkv"><dt>Last</dt><dd class="ttimeLast">&mdash;</dd>
+          <dt>Best</dt><dd class="ttimeBest">&mdash;</dd>
+          <dt>Average (last 5)</dt><dd class="ttimeAo5">&mdash;</dd></dl>
         <button class="small tbtnTimeClear" style="margin-top:8px">Clear records</button>
       </div>
     </div>
@@ -627,14 +734,23 @@
       <div class="tavghd"><div class="sctitle" style="margin:0">OLL practice</div><span class="spacer"></span><button class="small danger tbtnClearAvg">Clear these times</button></div>
       <div class="setline">Order <select class="toptOrder">
         <option value="random">random</option><option value="order">in order</option></select></div>
+      <div class="setline">Cases to show <select class="toptFilter">
+        <option value="all">all</option><option value="new">not registered yet</option>
+        <option value="done">registered</option></select></div>
       <div class="setline"><label><input type="checkbox" class="toptAuf"> Randomize AUF</label></div>
-      <div class="setline"><label><input type="checkbox" class="toptPll"> Practice through the PLL part</label></div>
+      <div class="setline"><label><input type="checkbox" class="toptAsk"> Ask to register when it comes out</label></div>
     </div>
-    <div class="panel">
-      <div class="sctitle">Cases</div>
-      <div class="tgroups"></div>
+    <div class="panel regPanel">
+      <div class="tavghd"><div class="sctitle" style="margin:0">Algorithms for this shape</div>
+        <span class="regHead">&mdash;</span><span class="spacer"></span>
+        <button class="small tbtnAddAlg">Add by hand</button></div>
+      <div class="rlist"></div>
+      <div class="tavghd" style="margin:10px 0 0">
+        <span class="regTotal"></span><span class="spacer"></span>
+        <button class="small danger tbtnRegClear">Delete every algorithm</button></div>
     </div>
   </div>
+
 
   <div class="tgrid">
     <div class="panel" style="flex:1 1 100%">
@@ -645,6 +761,7 @@
     </div>
   </div>
 </div>
+
 <div class="apppane trainer vTimer" data-a="pll" style="display:none">
   <div class="tviewbar">Also show:<span class="viewopts"><label><input type="checkbox" class="toptTop"> Top view</label><label><input type="checkbox" class="toptTimer"> Timer</label></span></div>
   <div class="tgrid">
@@ -653,22 +770,26 @@
         <svg class="ttop" width="230" height="230" role="img" aria-label="Top view"></svg>
         <div class="tstage"><div class="tcube3d"></div></div>
       </div>
+      <div class="histBox">
+        <div class="histLab">Turns made &mdash; a turn undone disappears; the first one, dotted, is the AUF</div>
+        <div class="hist"></div>
+      </div>
     </div>
 
     <div class="panel tstatsPanel">
-      <div class="tcaseNo tcaseTitle">—</div>
+      <div class="tcaseNo tcaseTitle">&mdash;</div>
       <div class="tcaseSub">&nbsp;</div>
       <div class="tflash"></div>
       <h2>Moves (U2 / R2 count as 1)</h2>
       <div class="thuge tmoveCount">0</div>
       <dl class="tkv"><dt>Solved</dt><dd class="tsolvedCount">0</dd>
-        <dt>Remaining</dt><dd class="tremain">—</dd></dl>
+        <dt>Remaining</dt><dd class="tremain">&mdash;</dd></dl>
       <div class="ttimerBox">
         <h2>Time (s)</h2>
         <div class="thuge ttimeNow">0.00</div>
-        <dl class="tkv"><dt>Last</dt><dd class="ttimeLast">—</dd>
-          <dt>Best</dt><dd class="ttimeBest">—</dd>
-          <dt>Average (last 5)</dt><dd class="ttimeAo5">—</dd></dl>
+        <dl class="tkv"><dt>Last</dt><dd class="ttimeLast">&mdash;</dd>
+          <dt>Best</dt><dd class="ttimeBest">&mdash;</dd>
+          <dt>Average (last 5)</dt><dd class="ttimeAo5">&mdash;</dd></dl>
         <button class="small tbtnTimeClear" style="margin-top:8px">Clear records</button>
       </div>
     </div>
@@ -685,14 +806,23 @@
       <div class="tavghd"><div class="sctitle" style="margin:0">PLL practice</div><span class="spacer"></span><button class="small danger tbtnClearAvg">Clear these times</button></div>
       <div class="setline">Order <select class="toptOrder">
         <option value="random">random</option><option value="order">in order</option></select></div>
+      <div class="setline">Cases to show <select class="toptFilter">
+        <option value="all">all</option><option value="new">not registered yet</option>
+        <option value="done">registered</option></select></div>
       <div class="setline"><label><input type="checkbox" class="toptAuf"> Randomize the colour orientation</label></div>
-      
+      <div class="setline"><label><input type="checkbox" class="toptAsk"> Ask to register when it comes out</label></div>
     </div>
-    <div class="panel">
-      <div class="sctitle">Cases</div>
-      <div class="tgroups"></div>
+    <div class="panel regPanel">
+      <div class="tavghd"><div class="sctitle" style="margin:0">Algorithms for this shape</div>
+        <span class="regHead">&mdash;</span><span class="spacer"></span>
+        <button class="small tbtnAddAlg">Add by hand</button></div>
+      <div class="rlist"></div>
+      <div class="tavghd" style="margin:10px 0 0">
+        <span class="regTotal"></span><span class="spacer"></span>
+        <button class="small danger tbtnRegClear">Delete every algorithm</button></div>
     </div>
   </div>
+
 
   <div class="tgrid">
     <div class="panel" style="flex:1 1 100%">
@@ -701,6 +831,99 @@
         <span class="tavgnote"></span></div>
       <div class="tavg"></div>
     </div>
+  </div>
+</div>
+
+<div class="apppane trainer vTimer" data-a="full" style="display:none">
+  <div class="tviewbar">Also show:<span class="viewopts"><label><input type="checkbox" class="toptTop"> Top view</label><label><input type="checkbox" class="toptTimer"> Timer</label></span></div>
+  <div class="tgrid">
+    <div class="panel tcubePanel">
+      <div class="tcubeRow">
+        <svg class="ttop" width="230" height="230" role="img" aria-label="Top view"></svg>
+        <div class="tstage"><div class="tcube3d"></div></div>
+      </div>
+      <div class="histBox">
+        <div class="histLab">Turns made &mdash; a turn undone disappears; the first one, dotted, is the AUF</div>
+        <div class="hist"></div>
+      </div>
+    </div>
+
+    <div class="panel tstatsPanel">
+      <div class="tcaseNo tcaseTitle">&mdash;</div>
+      <div class="tcaseSub">&nbsp;</div>
+      <div class="tflash"></div>
+      <h2>Moves (U2 / R2 count as 1)</h2>
+      <div class="thuge tmoveCount">0</div>
+      <dl class="tkv"><dt>Solved</dt><dd class="tsolvedCount">0</dd>
+        <dt>Remaining</dt><dd class="tremain">&mdash;</dd></dl>
+      <div class="ttimerBox">
+        <h2>Time (s)</h2>
+        <div class="thuge ttimeNow">0.00</div>
+        <dl class="tkv"><dt>Last</dt><dd class="ttimeLast">&mdash;</dd>
+          <dt>Best</dt><dd class="ttimeBest">&mdash;</dd>
+          <dt>Average (last 5)</dt><dd class="ttimeAo5">&mdash;</dd></dl>
+        <button class="small tbtnTimeClear" style="margin-top:8px">Clear records</button>
+      </div>
+    </div>
+
+    <div class="tactionCol">
+      <button class="actBtn tbtnRetry">Retry<small>Esc</small></button>
+      <button class="actBtn tbtnNext">Next</button>
+      <button class="actBtn tbtnLoop">Loop</button>
+    </div>
+  </div>
+
+  <div class="tgrid tsettings">
+    <div class="panel">
+      <div class="tavghd"><div class="sctitle" style="margin:0">OLL + PLL</div><span class="spacer"></span><button class="small danger tbtnClearAvg">Clear these times</button></div>
+      <div class="setline">Order <select class="toptOrder">
+        <option value="random">random</option><option value="order">in order</option></select></div>
+      <div class="setline">Cases to show <select class="toptFilter">
+        <option value="all">all</option><option value="new">not registered yet</option>
+        <option value="done">registered</option></select></div>
+      <div class="setline"><label><input type="checkbox" class="toptAuf"> Randomize AUF</label></div>
+      <div class="setline"><label><input type="checkbox" class="toptAsk"> Ask to register when it comes out</label></div>
+    </div>
+    <div class="panel regPanel">
+      <div class="tavghd"><div class="sctitle" style="margin:0">Algorithms for this shape</div>
+        <span class="regHead">&mdash;</span><span class="spacer"></span>
+        <button class="small tbtnAddAlg">Add by hand</button></div>
+      <div class="rlist"></div>
+      <div class="tavghd" style="margin:10px 0 0">
+        <span class="regTotal"></span><span class="spacer"></span>
+        <button class="small danger tbtnRegClear">Delete every algorithm</button></div>
+    </div>
+  </div>
+
+
+  <div class="tgrid">
+    <div class="panel" style="flex:1 1 100%">
+      <div class="tavghd"><div class="sctitle" style="margin:0">Seeing the PLL</div>
+        <button class="small tbtnRecSort">Slowest first</button>
+        <span class="trecnote"></span></div>
+      <div class="trecav"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============ everything, as text ============ -->
+<div class="apppane stpane" data-a="save" style="display:none">
+  <div class="panel">
+    <div class="tavghd"><div class="sctitle" style="margin:0">Everything in one text</div>
+      <span class="spacer"></span>
+      <button class="small" id="btnSaveWrite">Write it out</button>
+      <button class="small" id="btnSaveCopy">Copy</button>
+      <button class="small" id="btnSaveDl">Download</button></div>
+    <div class="savenote">Press <b>Write it out</b> and everything this app knows appears below:
+      the turn counts, the algorithms you have registered, the case times and every solve.
+      Keep that text anywhere you like — it is plain text, and you can edit it by hand.
+      To load it again, paste it back in and press one of the two buttons underneath.</div>
+    <textarea id="saveBox" spellcheck="false" placeholder="the text goes here"></textarea>
+    <div class="tavghd" style="margin-top:12px">
+      <button class="small primary" id="btnSaveAdd">Read it in — add to what is here</button>
+      <button class="small danger" id="btnSaveRep">Read it in — replace everything</button>
+      <span class="spacer"></span><span class="savemsg" id="saveMsg"></span></div>
   </div>
 </div>
 
@@ -720,12 +943,12 @@
 
   <section class="study">
     <div class="tabbar">
-      <button class="tabb on" data-t="timer">Timer</button>
-      <button class="tabb" data-t="analyze">Analyze</button>
+      <button class="tabb on" data-t="analyze">Analyze</button>
+      <button class="tabb" data-t="timer">Timer</button>
       <button class="tabb" data-t="info">Info</button>
     </div>
 
-    <div class="tabpane" data-t="timer">
+    <div class="tabpane" data-t="timer" style="display:none">
       <div class="sthead"><span class="sttag">Solve</span></div>
       <div class="splits">
         <div class="sCross"><div class="lab">Cross</div><div class="val">—</div></div>
@@ -736,7 +959,7 @@
       <div id="rsStages"></div>
     </div>
 
-    <div class="tabpane" data-t="analyze" style="display:none">
+    <div class="tabpane" data-t="analyze">
       <div class="sthead"><span class="sttag">Solver</span></div>
       <div id="stBody"></div>
       <div class="sthead" style="margin-top:18px"><span class="sttag">Solve so far</span></div>
@@ -3117,6 +3340,7 @@ const SIDE_HTML = `
   <div class="phasemsg">&nbsp;</div>
   <div class="scrtime">&nbsp;</div>
 
+  <div class="anword">&nbsp;</div>
   <div class="tlinebox">&nbsp;</div>
   <div class="redobox">
     <div class="redohd"><span class="redotag">REDO</span>
@@ -3810,7 +4034,8 @@ let solveRec = [];         // every turn of the solve being timed: move, time, c
 let solveT0 = 0;           // when the clock started
 let f2lT = null;           // the pairs are worked out a moment after the turning stops
 let f2lFollow = null;      // the pairs on show and how far along one of them the cube has got
-let tab = "timer";         // which of the three tabs the right-hand panel is showing
+let tab = "analyze";      // which of the three tabs the right-hand panel is showing;
+                          // studying is where the cube starts, timing is a choice
 const SIDES = {};
 
 const ctl = {
@@ -3836,11 +4061,9 @@ const ctl = {
      the cube is HELD in, so a turn has to be put into that grip first — otherwise
      the face that turns on screen is not the face that was turned in the hand. */
   moved: (k, mv) => { countTurn();
-                      if(app === "oll" || app === "pll") TRAIN[app].move(SIDES.A.viewTok(mv));
+                      if(TRAIN[app]) TRAIN[app].move(SIDES.A.viewTok(mv));
                       else onCubeMove(mv); },
-  gripChanged: () => { paintColours(); paintSeq(); paintStudy();
-                       if(TRAIN.oll) TRAIN.oll.repaint();
-                       if(TRAIN.pll) TRAIN.pll.repaint(); }
+  gripChanged: () => { paintColours(); paintSeq(); paintStudy(); paintDrills(); }
 };
 SIDES.A = makeSide(document.querySelector('.side[data-k="A"]'),
                    document.querySelector('.setside[data-k="A"]'), "A", ctl);
@@ -3891,7 +4114,8 @@ function setApp(a){
     el.style.display = el.dataset.a === a ? "" : "none");
   if(a === "setup") paintSetup();
   else if(a === "stats"){ SIDES.A.freeze(true); paintStats(); }
-  else if(a === "oll" || a === "pll"){ SIDES.A.freeze(true); TRAIN[a].repaint(); }
+  else if(a === "save"){ SIDES.A.freeze(true); if(!$("saveBox").value.trim()) $("btnSaveWrite").click(); }
+  else if(TRAIN[a]){ SIDES.A.freeze(true); TRAIN[a].repaint(); }
   else { paintHead(); paintStudy(); paintSeq(); }
 }
 document.querySelectorAll(".appt").forEach(el => el.onclick = () => setApp(el.dataset.a));
@@ -3960,7 +4184,11 @@ function paintHead(){
     : (!setSt || mode === "scramble" || (!hist.length && !returning && SIDES.A.state() === setSt));
   paintTabs();
   /* while the clock runs the cube panel shows the split times */
-  document.querySelector('.side[data-k="A"]').classList.toggle("timing", mode === "timing");
+  const side = document.querySelector('.side[data-k="A"]');
+  side.classList.toggle("timing", mode === "timing");
+  /* no clock is wanted until the Timer tab is chosen: the button that gets there
+     stands in its place */
+  side.classList.toggle("noclock", tab !== "timer" && mode !== "timing");
 }
 /* ---- the three tabs on the right: picking one is what turns the clock on ---- */
 function paintTabs(){
@@ -3987,7 +4215,7 @@ function setTab(t){
      a scramble is set, so New Scramble and the Timer can be used in either order */
   if(t === "timer" && setSt) startTiming();
   else if(t === "timer") ctl.msg("Timer on — set a scramble and it will be ready.", "warn");
-  paintTabs(); paintStudy(); paintAnalyze(); paintSolvePanel(); paintSeq();
+  paintTabs(); paintHead(); paintStudy(); paintAnalyze(); paintSolvePanel(); paintSeq();
 }
 document.querySelectorAll(".tabb").forEach(el => el.onclick = () => {
   const t = el.dataset.t;
@@ -4302,8 +4530,7 @@ function chipRow(id, sel, ok, pick){
     el.classList.toggle("no", !ok(el.dataset.c));
   });
 }
-const paintDrills = () => { if(TRAIN.oll) TRAIN.oll.repaint();
-                            if(TRAIN.pll) TRAIN.pll.repaint(); };
+const paintDrills = () => { ["oll","pll","full"].forEach(k => { if(TRAIN[k]) TRAIN[k].repaint(); }); };
 function paintColours(){
   chipRow("colTop", topCol(), () => true, c => {
     const f = adjacent(c).includes(frontCol()) ? frontCol() : adjacent(c)[0];
@@ -4541,12 +4768,20 @@ const gBigMark = () => { const m = SIDES.A.gripWord();
   return m ? `<span class="gmark">${m}</span>` : ""; };
 /** big, where the time usually stands: the cube is at the scramble, or how far off */
 function paintSetWord(){
-  if(mode !== "set" || justSolved) return;
-  const st = SIDES.A.state(), w = backWord();   // while a way back is up, it counts down
-  if(st === setSt) SIDES.A.note("Set", "ready");
-  else if(st === SOLVED) SIDES.A.note("Finished", "ready");
-  else if(w) SIDES.A.note(w, "");
-  else SIDES.A.note(hist.length ? String(hist.length) : "Off", "");
+  if(mode === "timing" || mode === "scramble" || justSolved) return;
+  /* the big figure is how much has been turned since the scramble — the same count
+     the Solve-so-far total shows — and the word under it says where the cube stands */
+  SIDES.A.note(String(setSt ? stageRows(raw, crossFaceNow(), true).moves : 0), "");
+  const w = document.querySelector(".anword");
+  if(!w) return;
+  const st = SIDES.A.state(), back = backWord();
+  let t = "", on = false;
+  if(!setSt) t = "no scramble yet";
+  else if(st === setSt){ t = "Ready"; on = true; }
+  else if(st === SOLVED) t = "Finished";
+  else if(back) t = back + " to go";
+  w.textContent = t || "\u00a0";
+  w.className = "anword" + (on ? " on" : "");
 }
 /* ============================================================
    11b. The Redo window
@@ -4629,15 +4864,19 @@ function paintRedo(){
   const box = document.querySelector(".redobox");
   if(!box) return;
   const running = mode === "timing" && SIDES.A.phase() === SOLVING;
-  box.style.display = running ? "none" : "";          // nothing to undo while the clock runs
-  if(running) return;
+  const plain0 = returning ? null : rewindLine();
+  /* while timing, the box is only there to bring the cube back; with nothing to
+     bring back there is nothing to show, and the solver takes the space */
+  const idle = mode === "timing" && !(returning ? L.rem.length : plain0.length);
+  box.style.display = (running || idle) ? "none" : "";
+  if(running || idle) return;
   const big = SIDES.A.seqBig(), all = SIDES.A.seqAll(), fix = SIDES.A.seqFix();
   const cnt = document.querySelector(".redocount"), btn = document.querySelector(".btnRecalc2");
   const tag = document.querySelector(".redotag");
   if(tag) tag.textContent = returning ? "RESUME" : "REDO";   // a worked-out way has a name
   box.classList.toggle("calc", returning);          // orange: a way that was worked out
   box.classList.toggle("plain", !returning);        // blue: simply turning it back
-  const plain = returning ? null : rewindLine();
+  const plain = plain0;
   const left = returning ? L.rem.length : plain.length;
   if(btn) btn.disabled = !setSt || !left;
   if(cnt) cnt.textContent = left ? (returning ? lLeft() : left) + " to go" : "";
@@ -4646,7 +4885,7 @@ function paintRedo(){
   if(!left){
     all.innerHTML = "";
     big.innerHTML = '<div class="seqline"><span class="grp"><span class="msg">'
-      + (setSt ? "At the scramble" : "nothing set yet") + '</span></span></div>';
+      + (setSt ? "Ready" : "nothing set yet") + '</span></span></div>';
     redoLen = -1;
     return;
   }
@@ -4681,11 +4920,16 @@ function paintTimerLine(){
   const box = document.querySelector(".tlinebox");
   if(!box) return;
   SIDES.A.seqFix().innerHTML = "&nbsp;";
-  if(mode !== "timing"){ box.innerHTML = "&nbsp;"; return; }
-  const a = justSolved && log.length ? log[log.length-1].a : null;
-  box.innerHTML = a && !a.dnf
-    ? `<span class="tline">${a.moves} moves &nbsp;·&nbsp; ${(a.moves/(a.ms/1000)).toFixed(2)} TPS</span>`
-    : `<span class="tline">${solveMv.length} moves</span>`;
+  if(mode === "timing"){
+    const a = justSolved && log.length ? log[log.length-1].a : null;
+    box.innerHTML = a && !a.dnf
+      ? `<span class="tline">${a.moves} moves &nbsp;·&nbsp; ${(a.moves/(a.ms/1000)).toFixed(2)} TPS</span>`
+      : `<span class="tline">${solveMv.length} moves</span>`;
+    return;
+  }
+  /* studying: the big figure above carries the count, so this line stays out of the way */
+  box.innerHTML = "&nbsp;";
+  paintSetWord();
 }
 /* ---- armed and waiting: the way into the cross, under the cube. The first turn
         takes it away again — it is there to be looked at, not solved from ---- */
@@ -4693,7 +4937,10 @@ let readySeq = 0;
 function paintReadySolver(){
   const box = document.querySelector(".solvebox");
   if(!box) return;
-  const on = mode === "timing" && !!setSt && !justSolved && SIDES.A.phase() === READY;
+  /* studying: the way into the cross belongs on screen the whole time, turning or not.
+     Timing: it is there while the clock is armed, and the first turn takes it away. */
+  const on = !!setSt && !justSolved
+    && (tab === "analyze" || (mode === "timing" && SIDES.A.phase() === READY));
   box.style.display = on ? "" : "none";
   if(!on){ box.innerHTML = ""; readySeq++; return; }
   const face = crossFaceNow();
@@ -5297,6 +5544,272 @@ window.addEventListener("beforeunload", () => { if(turnSave) saveTurns(); });
 document.addEventListener("visibilitychange", () => {
   if(document.visibilityState === "hidden" && turnSave) saveTurns(); });
 
+/* ============================================================
+   14c. Everything this app knows, as text
+   ============================================================
+   One readable file: the settings, the day-by-day turn counts, the algorithms that
+   have been registered, how long each case takes, and every solve. It can be read,
+   edited by hand, and pasted back in. */
+const COL_BY_NAME = (function(){ const m = {};
+  for(const c in COL_NAME) m[COL_NAME[c].toLowerCase()] = c;
+  return m; })();
+const secs = ms => (ms/1000).toFixed(2);
+function saveText(){
+  const p2 = n => String(n).padStart(2, "0"), now = new Date();
+  const grip = SIDES.A.grip(), sg = SIDES.A.scrGrip();
+  const L = ["# CubeSuite \u2014 everything this app knows",
+             "# written " + dayKey(now) + " " + p2(now.getHours()) + ":" + p2(now.getMinutes()),
+             "# A line starting with # is a note and is skipped when this is read back.",
+             "# Paste the whole text back in to load it again.",
+             "",
+             "## settings", ""];
+  L.push("solving top = " + COL_NAME[grip.top],
+         "solving front = " + COL_NAME[grip.front],
+         "scramble top = " + COL_NAME[sg.top],
+         "scramble front = " + COL_NAME[sg.front],
+         "scramble length = " + scrLen,
+         "digits = " + prec,
+         "retry action = " + (LS.get("t.retry", T_RETRY_DEF) || "(off)"),
+         "show algorithms = " + ($("optShowAid").checked ? "yes" : "no"),
+         "slice notation = " + ($("optSlice").checked ? "yes" : "no"), "");
+
+  L.push("## turns", "# a day, then the number of turns made that day", "");
+  Object.keys(turns).sort().forEach(k => { if(turns[k]) L.push(k + " = " + turns[k]); });
+  L.push("");
+
+  L.push("## algorithms",
+         "# Under each shape, one algorithm a line. A U, U2 or U' at the head of a line",
+         "# is the AUF to start from. Anything after ';' is a name of your own.", "");
+  const ab = algBlock();
+  if(ab.length) Array.prototype.push.apply(L, ab);
+  else L.push("# (nothing registered yet)", "");
+
+  L.push("## case times", "# how long each case has taken, in seconds, oldest first", "");
+  [["OLL", "oll"], ["PLL", "pll"], ["OLL+PLL", "full"]].forEach(([nm, k]) => {
+    const T = TRAIN[k] ? TRAIN[k].caseTimes() : {};
+    const ids = Object.keys(T).filter(i => T[i] && T[i].length);
+    if(!ids.length) return;
+    L.push("### " + nm);
+    const mode = k === "pll" ? "PLL" : "OLL";
+    ids.map(Number).sort((x,y) => x-y).forEach(id =>
+      L.push(caseLabel(mode, id) + " = " + T[String(id)].map(secs).join(" ")));
+    L.push("");
+  });
+
+  const R = TRAIN.full ? TRAIN.full.recogTimes() : {};
+  const rids = Object.keys(R).filter(i => R[i] && R[i].length);
+  L.push("## pll recognition",
+         "# from the top face coming good to the first turn that is not an AUF, in seconds", "");
+  rids.map(Number).sort((x,y) => x-y).forEach(id =>
+    L.push(caseLabel("PLL", id) + " = " + R[String(id)].map(secs).join(" ")));
+  L.push("");
+
+  L.push("## solves",
+         "# number = time | turns | the scramble",
+         "# the indented lines under it are the stages: name | time | turns | the turns", "");
+  log.forEach((r, i) => {
+    const a = r.a; if(!a) return;
+    L.push((i+1) + " = " + (a.dnf ? "gave up" : secs(a.ms)) + " | " + (a.moves || 0)
+           + " | " + (roundScramble(r) || "?"));
+    if(a.sum && a.sum.rows) a.sum.rows.forEach(row => {
+      if(row.mv == null) return;
+      L.push("   " + row.k + " | " + secs(row.t || 0) + " | "
+             + (row.mv ? row.mv.split(" ").length : 0) + " | " + row.mv);
+    });
+  });
+  L.push("");
+  return L.join("\n");
+}
+
+/** read that text back. `replace` throws away what is here first; otherwise what is
+    already here is kept and only what is missing is taken from the text. */
+function loadText(txt, replace){
+  const lines = String(txt).split(/\r?\n/);
+  let sec = "", sub = "", curSolve = null;
+  const set = {}, tIn = {}, algLines = [], caseIn = {}, recIn = {}, solves = [];
+  for(const raw of lines){
+    const line = raw.replace(/^\ufeff/, ""), t = line.trim();
+    if(!t) continue;
+    const h2 = /^##[ \t]+(.+)$/.exec(t);
+    if(h2){ sec = h2[1].trim().toLowerCase(); sub = ""; curSolve = null; continue; }
+    if(sec === "algorithms"){ algLines.push(line); continue; }
+    const h3 = /^###[ \t]+(.+)$/.exec(t);
+    if(h3){ sub = h3[1].trim().toLowerCase(); continue; }
+    if(t[0] === "#") continue;
+    const kv = /^([^=]+?)\s*=\s*(.*)$/.exec(t);
+    if(sec === "settings"){ if(kv) set[kv[1].trim().toLowerCase()] = kv[2].trim(); continue; }
+    if(sec === "turns"){ if(kv && +kv[2] > 0) tIn[kv[1].trim()] = +kv[2]; continue; }
+    if(sec === "case times"){
+      if(!kv) continue;
+      const k = sub.indexOf("pll") === 0 ? "pll" : sub.indexOf("oll+") === 0 ? "full" : "oll";
+      const id = caseIdOf(kv[1].trim());
+      if(id == null) continue;
+      (caseIn[k] = caseIn[k] || {})[id] =
+        kv[2].split(/\s+/).filter(Boolean).map(x => Math.round(parseFloat(x)*1000)).filter(x => x > 0);
+      continue;
+    }
+    if(sec === "pll recognition"){
+      if(!kv) continue;
+      const id = caseIdOf(kv[1].trim());
+      if(id == null) continue;
+      recIn[id] = kv[2].split(/\s+/).filter(Boolean)
+                    .map(x => Math.round(parseFloat(x)*1000)).filter(x => x >= 0);
+      continue;
+    }
+    if(sec === "solves"){
+      if(/^\s/.test(line) && curSolve){                 // an indented line is a stage
+        const f = t.split("|").map(x => x.trim());
+        if(f.length >= 4) curSolve.rows.push({k: f[0], t: Math.round(parseFloat(f[1])*1000),
+                                              mv: f[3], p: null});
+        continue;
+      }
+      if(!kv) continue;
+      const f = kv[2].split("|").map(x => x.trim());
+      curSolve = {ms: /gave up/i.test(f[0]) ? null : Math.round(parseFloat(f[0])*1000),
+                  moves: +f[1] || 0, scr: f[2] || "", rows: []};
+      solves.push(curSolve);
+      continue;
+    }
+  }
+  const note = [];
+
+  /* ---- the settings ---- */
+  const col = v => COL_BY_NAME[String(v).toLowerCase()] || null;
+  if(set["solving top"] || set["solving front"]){
+    const tc = col(set["solving top"]) || SIDES.A.grip().top;
+    let fc = col(set["solving front"]) || SIDES.A.grip().front;
+    if(!adjacent(tc).includes(fc)) fc = adjacent(tc)[0];
+    SIDES.A.setGrip(tc, fc); note.push("the colours");
+  }
+  if(set["scramble top"] || set["scramble front"]){
+    const tc = col(set["scramble top"]) || SIDES.A.scrGrip().top;
+    let fc = col(set["scramble front"]) || SIDES.A.scrGrip().front;
+    SIDES.A.setScrGrip(tc, fc);
+  }
+  if(set["scramble length"] && +set["scramble length"] > 0){
+    scrLen = +set["scramble length"]; LS.set("len", scrLen); $("selLen").value = String(scrLen);
+  }
+  if(set["digits"]){ prec = +set["digits"] === 3 ? 3 : 2; LS.set("prec", prec);
+                     $("selPrec").value = String(prec); }
+  if(set["retry action"]){
+    const v = /^\(off\)$/i.test(set["retry action"]) ? "" : set["retry action"];
+    $("retrySeq").value = v; $("retrySeq").oninput();
+  }
+  const yes = v => /^(yes|on|true|1)$/i.test(String(v));
+  if(set["show algorithms"]){ $("optShowAid").checked = yes(set["show algorithms"]);
+                              $("optShowAid").onchange(); }
+  if(set["slice notation"]){ $("optSlice").checked = yes(set["slice notation"]);
+                             $("optSlice").onchange(); }
+
+  /* ---- the turn counts ---- */
+  if(replace) turns = {};
+  let days = 0;
+  for(const k in tIn){
+    const v = replace ? tIn[k] : Math.max(turns[k] || 0, tIn[k]);
+    if(v !== turns[k]) days++;
+    turns[k] = v;
+  }
+  saveTurns(); paintTurns();
+  if(days) note.push(days + " day" + (days > 1 ? "s" : "") + " of turns");
+
+  /* ---- the algorithms ---- */
+  if(replace){ REG.OLL = {}; REG.PLL = {}; }
+  const got = parseExport(algLines.join("\n"));
+  ["OLL","PLL"].forEach(m => {
+    for(const key in got.add[m]){
+      REG[m][key] = REG[m][key] || [];
+      got.add[m][key].forEach(r => {
+        if(!REG[m][key].some(x => x.alg === r.alg)) REG[m][key].push(r);
+      });
+    }
+  });
+  normalizeReg(); saveReg();
+  if(got.n) note.push(got.n + " algorithm" + (got.n > 1 ? "s" : ""));
+
+  /* ---- the case times ---- */
+  let cn = 0;
+  ["oll","pll","full"].forEach(k => {
+    if(!TRAIN[k]) return;
+    const have = TRAIN[k].caseTimes(), from = caseIn[k] || {};
+    const out = replace ? {} : have;
+    for(const id in from){ if(!out[id] || !out[id].length){ out[id] = from[id]; cn++; } }
+    TRAIN[k].setCaseTimes(out);
+  });
+  if(TRAIN.full){
+    const have = TRAIN.full.recogTimes(), out = replace ? {} : have;
+    for(const id in recIn){ if(!out[id] || !out[id].length){ out[id] = recIn[id]; cn++; } }
+    TRAIN.full.setRecogTimes(out);
+  }
+  if(cn) note.push(cn + " case" + (cn > 1 ? "s" : "") + " of times");
+
+  /* ---- the solves ---- */
+  if(replace){ log = []; round = 0; }
+  let sn = 0;
+  if(solverInit()) solves.forEach(x => {
+    if(!x.scr || x.scr === "?") return;
+    let st = SOLVED, ok = true;
+    for(const m of x.scr.split(/\s+/).filter(Boolean)){
+      if(!MV[m]){ ok = false; break; }
+      st = applyMove(st, m);
+    }
+    if(!ok) return;
+    if(!replace && log.some(r => r.a && r.a.st0 === st && r.a.ms === x.ms
+                                 && (r.a.moves || 0) === x.moves)) return;
+    const rows = x.rows.map(r => ({k: r.k, p: null, mv: r.mv, t: r.t}));
+    const pick = nm => { const r = x.rows.find(y => y.k === nm); return r ? r.t : 0; };
+    const f2l = x.rows.filter(y => y.k.indexOf("F2L") === 0).reduce((t,y) => t + y.t, 0);
+    log.push({a: {ms: x.ms, moves: x.moves, dnf: x.ms == null, t: Date.now(), st0: st,
+                  cross: pick("Cross"), f2l: f2l, oll: pick("OLL"), pll: pick("PLL"),
+                  sum: rows.length ? {rows: rows, ms: x.ms || 0, moves: x.moves} : null}});
+    sn++;
+  });
+  round = log.length;
+  saveSession(); paintTimes(); paintResults(); paintHead();
+  if(sn) note.push(sn + " solve" + (sn > 1 ? "s" : ""));
+
+  paintDrills(); paintStudy(); paintSeq();
+  return {note: note, bad: got.bad.length};
+}
+/** "OLL 21" or "PLL Ua" back to the number this app files it under */
+function caseIdOf(label){
+  const m = /^(OLL|PLL)\s+(.+)$/i.exec(String(label).trim());
+  if(!m) return null;
+  const t = m[2].replace(/^No\.?/i, "").trim();
+  return m[1].toUpperCase() === "OLL" ? (OLL_BY_STD[+t] || null)
+                                      : (PLL_BY_NAME[t.toUpperCase()] || null);
+}
+const saySave = (t, cls) => { const el = $("saveMsg");
+  el.textContent = t || ""; el.className = "savemsg" + (cls ? " " + cls : ""); };
+$("btnSaveWrite").onclick = () => { $("saveBox").value = saveText();
+  saySave("Written out. Keep this text somewhere safe.", "ok"); };
+$("btnSaveCopy").onclick = async () => {
+  const box = $("saveBox");
+  if(!box.value.trim()) box.value = saveText();
+  box.select();
+  try{ await navigator.clipboard.writeText(box.value); saySave("Copied.", "ok"); }
+  catch(e){ saySave("Press \u2318C / Ctrl-C to copy.", ""); }
+};
+$("btnSaveDl").onclick = () => {
+  const box = $("saveBox");
+  if(!box.value.trim()) box.value = saveText();
+  saveFile("CubeSuite-" + dayKey() + ".txt", box.value);
+  saySave("Saved as a file.", "ok");
+};
+async function readSave(replace){
+  const txt = $("saveBox").value;
+  if(!txt.trim()){ saySave("Paste the text in first.", "err"); return; }
+  if(replace && !await ask("Replace everything?",
+      "Everything now in this app \u2014 solves, turn counts, algorithms, case times \u2014 "
+      + "goes, and what is in the text takes its place.\nThis cannot be undone.")) return;
+  let r = null;
+  try{ r = loadText(txt, replace); }
+  catch(e){ saySave("That text could not be read: " + e.message, "err"); return; }
+  saySave((r.note.length ? "Read in: " + r.note.join(", ") : "Nothing in that text to read in")
+          + (r.bad ? "  \u00b7  " + r.bad + " line(s) skipped" : ""), r.note.length ? "ok" : "err");
+}
+$("btnSaveAdd").onclick = () => readSave(false);
+$("btnSaveRep").onclick = () => readSave(true);
+
 /* ---- the page's own dialogs ---- */
 /* ---- the page's own dialogs ----
    A browser can refuse to show its own confirm box and can refuse to save a file
@@ -5437,8 +5950,8 @@ $("btnReset").onclick = async () => {
         + "The cube stays connected.\nThis cannot be undone.")) return;
   log = []; round = 0; setSt = null; setScr = null; hist = []; raw = []; mode = "none"; returning = false;
   try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
-  if(TRAIN.oll) TRAIN.oll.clearTimes();       // the drills\' own times go too —
-  if(TRAIN.pll) TRAIN.pll.clearTimes();       // the turn counts never do
+  ["oll","pll","full"].forEach(k => { if(TRAIN[k]) TRAIN[k].clearTimes(); });
+                                              // the turn counts are never touched
   SIDES.A.freeze(false); SIDES.A.showsSeq(true); SIDES.A.scrView(false); SIDES.A.idle();
   paintHead(); paintTimes(); paintResults(); paintStudy();
   ctl.msg("Everything cleared — solves and case times. The turn counts are kept.", "ok");
@@ -5501,6 +6014,478 @@ setApp("setup");
    drawn with the suite's own colours.
    ============================================================ */
 const TDATA = {"perm":{"U":[6,3,0,7,4,1,8,5,2,45,46,47,12,13,14,15,16,17,9,10,11,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,18,19,20,39,40,41,42,43,44,36,37,38,48,49,50,51,52,53],"R":[0,1,20,3,4,23,6,7,26,15,12,9,16,13,10,17,14,11,18,19,29,21,22,32,24,25,35,27,28,51,30,31,48,33,34,45,36,37,38,39,40,41,42,43,44,8,46,47,5,49,50,2,52,53],"F":[0,1,2,3,4,5,44,41,38,6,10,11,7,13,14,8,16,17,24,21,18,25,22,19,26,23,20,15,12,9,30,31,32,33,34,35,36,37,27,39,40,28,42,43,29,45,46,47,48,49,50,51,52,53],"D":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,24,25,26,18,19,20,21,22,23,42,43,44,33,30,27,34,31,28,35,32,29,36,37,38,39,40,41,51,52,53,45,46,47,48,49,50,15,16,17],"L":[53,1,2,50,4,5,47,7,8,9,10,11,12,13,14,15,16,17,0,19,20,3,22,23,6,25,26,18,28,29,21,31,32,24,34,35,42,39,36,43,40,37,44,41,38,45,46,33,48,49,30,51,52,27],"B":[11,14,17,3,4,5,6,7,8,9,10,35,12,13,34,15,16,33,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,36,39,42,2,37,38,1,40,41,0,43,44,51,48,45,52,49,46,53,50,47]},"cases":[{"cts":[0,0,1,2],"efs":[0,0,0,0],"shape":"Cross","oe":4,"oc":2,"id":1},{"cts":[0,0,2,1],"efs":[0,0,0,0],"shape":"Cross","oe":4,"oc":2,"id":2},{"cts":[0,1,0,2],"efs":[0,0,0,0],"shape":"Cross","oe":4,"oc":2,"id":3},{"cts":[0,1,1,1],"efs":[0,0,0,0],"shape":"Cross","oe":4,"oc":1,"id":4},{"cts":[0,2,2,2],"efs":[0,0,0,0],"shape":"Cross","oe":4,"oc":1,"id":5},{"cts":[1,1,2,2],"efs":[0,0,0,0],"shape":"Cross","oe":4,"oc":0,"id":6},{"cts":[1,2,1,2],"efs":[0,0,0,0],"shape":"Cross","oe":4,"oc":0,"id":7},{"cts":[0,0,0,0],"efs":[0,1,0,1],"shape":"Line","oe":2,"oc":4,"id":8},{"cts":[0,0,1,2],"efs":[0,1,0,1],"shape":"Line","oe":2,"oc":2,"id":9},{"cts":[0,0,1,2],"efs":[1,0,1,0],"shape":"Line","oe":2,"oc":2,"id":10},{"cts":[0,0,2,1],"efs":[0,1,0,1],"shape":"Line","oe":2,"oc":2,"id":11},{"cts":[0,0,2,1],"efs":[1,0,1,0],"shape":"Line","oe":2,"oc":2,"id":12},{"cts":[0,1,0,2],"efs":[0,1,0,1],"shape":"Line","oe":2,"oc":2,"id":13},{"cts":[0,1,0,2],"efs":[1,0,1,0],"shape":"Line","oe":2,"oc":2,"id":14},{"cts":[0,1,1,1],"efs":[0,1,0,1],"shape":"Line","oe":2,"oc":1,"id":15},{"cts":[0,1,1,1],"efs":[1,0,1,0],"shape":"Line","oe":2,"oc":1,"id":16},{"cts":[0,2,2,2],"efs":[0,1,0,1],"shape":"Line","oe":2,"oc":1,"id":17},{"cts":[0,2,2,2],"efs":[1,0,1,0],"shape":"Line","oe":2,"oc":1,"id":18},{"cts":[1,1,2,2],"efs":[0,1,0,1],"shape":"Line","oe":2,"oc":0,"id":19},{"cts":[1,1,2,2],"efs":[1,0,1,0],"shape":"Line","oe":2,"oc":0,"id":20},{"cts":[1,2,1,2],"efs":[0,1,0,1],"shape":"Line","oe":2,"oc":0,"id":21},{"cts":[1,2,1,2],"efs":[1,0,1,0],"shape":"Line","oe":2,"oc":0,"id":22},{"cts":[0,0,0,0],"efs":[0,0,1,1],"shape":"L shape","oe":2,"oc":4,"id":23},{"cts":[0,0,1,2],"efs":[0,0,1,1],"shape":"L shape","oe":2,"oc":2,"id":24},{"cts":[0,0,1,2],"efs":[0,1,1,0],"shape":"L shape","oe":2,"oc":2,"id":25},{"cts":[0,0,1,2],"efs":[1,0,0,1],"shape":"L shape","oe":2,"oc":2,"id":26},{"cts":[0,0,1,2],"efs":[1,1,0,0],"shape":"L shape","oe":2,"oc":2,"id":27},{"cts":[0,0,2,1],"efs":[0,0,1,1],"shape":"L shape","oe":2,"oc":2,"id":28},{"cts":[0,0,2,1],"efs":[0,1,1,0],"shape":"L shape","oe":2,"oc":2,"id":29},{"cts":[0,0,2,1],"efs":[1,0,0,1],"shape":"L shape","oe":2,"oc":2,"id":30},{"cts":[0,0,2,1],"efs":[1,1,0,0],"shape":"L shape","oe":2,"oc":2,"id":31},{"cts":[0,1,0,2],"efs":[0,0,1,1],"shape":"L shape","oe":2,"oc":2,"id":32},{"cts":[0,1,0,2],"efs":[0,1,1,0],"shape":"L shape","oe":2,"oc":2,"id":33},{"cts":[0,1,0,2],"efs":[1,0,0,1],"shape":"L shape","oe":2,"oc":2,"id":34},{"cts":[0,1,0,2],"efs":[1,1,0,0],"shape":"L shape","oe":2,"oc":2,"id":35},{"cts":[0,1,1,1],"efs":[0,0,1,1],"shape":"L shape","oe":2,"oc":1,"id":36},{"cts":[0,1,1,1],"efs":[0,1,1,0],"shape":"L shape","oe":2,"oc":1,"id":37},{"cts":[0,1,1,1],"efs":[1,0,0,1],"shape":"L shape","oe":2,"oc":1,"id":38},{"cts":[0,1,1,1],"efs":[1,1,0,0],"shape":"L shape","oe":2,"oc":1,"id":39},{"cts":[0,2,2,2],"efs":[0,0,1,1],"shape":"L shape","oe":2,"oc":1,"id":40},{"cts":[0,2,2,2],"efs":[0,1,1,0],"shape":"L shape","oe":2,"oc":1,"id":41},{"cts":[0,2,2,2],"efs":[1,0,0,1],"shape":"L shape","oe":2,"oc":1,"id":42},{"cts":[0,2,2,2],"efs":[1,1,0,0],"shape":"L shape","oe":2,"oc":1,"id":43},{"cts":[1,1,2,2],"efs":[0,0,1,1],"shape":"L shape","oe":2,"oc":0,"id":44},{"cts":[1,1,2,2],"efs":[0,1,1,0],"shape":"L shape","oe":2,"oc":0,"id":45},{"cts":[1,1,2,2],"efs":[1,0,0,1],"shape":"L shape","oe":2,"oc":0,"id":46},{"cts":[1,1,2,2],"efs":[1,1,0,0],"shape":"L shape","oe":2,"oc":0,"id":47},{"cts":[1,2,1,2],"efs":[0,0,1,1],"shape":"L shape","oe":2,"oc":0,"id":48},{"cts":[1,2,1,2],"efs":[0,1,1,0],"shape":"L shape","oe":2,"oc":0,"id":49},{"cts":[0,0,0,0],"efs":[1,1,1,1],"shape":"Dot","oe":0,"oc":4,"id":50},{"cts":[0,0,1,2],"efs":[1,1,1,1],"shape":"Dot","oe":0,"oc":2,"id":51},{"cts":[0,0,2,1],"efs":[1,1,1,1],"shape":"Dot","oe":0,"oc":2,"id":52},{"cts":[0,1,0,2],"efs":[1,1,1,1],"shape":"Dot","oe":0,"oc":2,"id":53},{"cts":[0,1,1,1],"efs":[1,1,1,1],"shape":"Dot","oe":0,"oc":1,"id":54},{"cts":[0,2,2,2],"efs":[1,1,1,1],"shape":"Dot","oe":0,"oc":1,"id":55},{"cts":[1,1,2,2],"efs":[1,1,1,1],"shape":"Dot","oe":0,"oc":0,"id":56},{"cts":[1,2,1,2],"efs":[1,1,1,1],"shape":"Dot","oe":0,"oc":0,"id":57}],"pll":[{"cp":[0,1,2,3],"ep":[2,3,0,1],"c":"No change","e":"Two pairs swapped (diagonal)","grp":"Edges only","variants":[[[0,1,2,3],[2,3,0,1]],[[1,2,3,0],[3,0,1,2]],[[2,3,0,1],[0,1,2,3]],[[3,0,1,2],[1,2,3,0]]],"id":1,"nm":"H"},{"cp":[0,1,2,3],"ep":[1,0,3,2],"c":"No change","e":"Two pairs swapped (adjacent)","grp":"Edges only","variants":[[[0,1,2,3],[1,0,3,2]],[[0,1,2,3],[3,2,1,0]],[[1,2,3,0],[0,3,2,1]],[[1,2,3,0],[2,1,0,3]],[[2,3,0,1],[1,0,3,2]],[[2,3,0,1],[3,2,1,0]],[[3,0,1,2],[0,3,2,1]],[[3,0,1,2],[2,1,0,3]]],"id":2,"nm":"Z"},{"cp":[0,1,2,3],"ep":[0,2,3,1],"c":"No change","e":"3-cycle","grp":"Edges only","variants":[[[0,1,2,3],[0,2,3,1]],[[0,1,2,3],[1,2,0,3]],[[0,1,2,3],[1,3,2,0]],[[0,1,2,3],[2,1,3,0]],[[1,2,3,0],[1,3,0,2]],[[1,2,3,0],[2,0,3,1]],[[1,2,3,0],[2,3,1,0]],[[1,2,3,0],[3,2,0,1]],[[2,3,0,1],[0,3,1,2]],[[2,3,0,1],[2,0,1,3]],[[2,3,0,1],[3,0,2,1]],[[2,3,0,1],[3,1,0,2]],[[3,0,1,2],[0,1,3,2]],[[3,0,1,2],[0,2,1,3]],[[3,0,1,2],[1,0,2,3]],[[3,0,1,2],[3,1,2,0]]],"id":3,"nm":"Ub"},{"cp":[0,1,2,3],"ep":[0,3,1,2],"c":"No change","e":"3-cycle","grp":"Edges only","variants":[[[0,1,2,3],[0,3,1,2]],[[0,1,2,3],[2,0,1,3]],[[0,1,2,3],[3,0,2,1]],[[0,1,2,3],[3,1,0,2]],[[1,2,3,0],[0,1,3,2]],[[1,2,3,0],[0,2,1,3]],[[1,2,3,0],[1,0,2,3]],[[1,2,3,0],[3,1,2,0]],[[2,3,0,1],[0,2,3,1]],[[2,3,0,1],[1,2,0,3]],[[2,3,0,1],[1,3,2,0]],[[2,3,0,1],[2,1,3,0]],[[3,0,1,2],[1,3,0,2]],[[3,0,1,2],[2,0,3,1]],[[3,0,1,2],[2,3,1,0]],[[3,0,1,2],[3,2,0,1]]],"id":4,"nm":"Ua"},{"cp":[1,0,3,2],"ep":[0,1,2,3],"c":"Two pairs swapped (adjacent)","e":"No change","grp":"Corners only","variants":[[[0,3,2,1],[1,2,3,0]],[[0,3,2,1],[3,0,1,2]],[[1,0,3,2],[0,1,2,3]],[[1,0,3,2],[2,3,0,1]],[[2,1,0,3],[1,2,3,0]],[[2,1,0,3],[3,0,1,2]],[[3,2,1,0],[0,1,2,3]],[[3,2,1,0],[2,3,0,1]]],"id":5,"nm":"E"},{"cp":[0,2,3,1],"ep":[0,1,2,3],"c":"3-cycle","e":"No change","grp":"Corners only","variants":[[[0,1,3,2],[3,0,1,2]],[[0,2,1,3],[3,0,1,2]],[[0,2,3,1],[0,1,2,3]],[[0,3,1,2],[2,3,0,1]],[[1,0,2,3],[3,0,1,2]],[[1,2,0,3],[0,1,2,3]],[[1,3,0,2],[1,2,3,0]],[[1,3,2,0],[0,1,2,3]],[[2,0,1,3],[2,3,0,1]],[[2,0,3,1],[1,2,3,0]],[[2,1,3,0],[0,1,2,3]],[[2,3,1,0],[1,2,3,0]],[[3,0,2,1],[2,3,0,1]],[[3,1,0,2],[2,3,0,1]],[[3,1,2,0],[3,0,1,2]],[[3,2,0,1],[1,2,3,0]]],"id":6,"nm":"Aa"},{"cp":[0,3,1,2],"ep":[0,1,2,3],"c":"3-cycle","e":"No change","grp":"Corners only","variants":[[[0,1,3,2],[1,2,3,0]],[[0,2,1,3],[1,2,3,0]],[[0,2,3,1],[2,3,0,1]],[[0,3,1,2],[0,1,2,3]],[[1,0,2,3],[1,2,3,0]],[[1,2,0,3],[2,3,0,1]],[[1,3,0,2],[3,0,1,2]],[[1,3,2,0],[2,3,0,1]],[[2,0,1,3],[0,1,2,3]],[[2,0,3,1],[3,0,1,2]],[[2,1,3,0],[2,3,0,1]],[[2,3,1,0],[3,0,1,2]],[[3,0,2,1],[0,1,2,3]],[[3,1,0,2],[0,1,2,3]],[[3,1,2,0],[1,2,3,0]],[[3,2,0,1],[3,0,1,2]]],"id":7,"nm":"Ab"},{"cp":[0,3,2,1],"ep":[0,3,2,1],"c":"Swap (diagonal)","e":"Swap (diagonal)","grp":"Both","variants":[[[0,3,2,1],[0,3,2,1]],[[1,0,3,2],[1,0,3,2]],[[2,1,0,3],[2,1,0,3]],[[3,2,1,0],[3,2,1,0]]],"id":8,"nm":"Nb"},{"cp":[0,3,2,1],"ep":[2,1,0,3],"c":"Swap (diagonal)","e":"Swap (diagonal)","grp":"Both","variants":[[[0,3,2,1],[2,1,0,3]],[[1,0,3,2],[3,2,1,0]],[[2,1,0,3],[0,3,2,1]],[[3,2,1,0],[1,0,3,2]]],"id":9,"nm":"Na"},{"cp":[0,3,2,1],"ep":[0,1,3,2],"c":"Swap (diagonal)","e":"Swap (adjacent)","grp":"Both","variants":[[[0,3,2,1],[0,1,3,2]],[[0,3,2,1],[1,0,2,3]],[[0,3,2,1],[1,3,0,2]],[[0,3,2,1],[2,0,3,1]],[[1,0,3,2],[1,2,0,3]],[[1,0,3,2],[2,0,1,3]],[[1,0,3,2],[2,1,3,0]],[[1,0,3,2],[3,1,0,2]],[[2,1,0,3],[0,2,1,3]],[[2,1,0,3],[2,3,1,0]],[[2,1,0,3],[3,1,2,0]],[[2,1,0,3],[3,2,0,1]],[[3,2,1,0],[0,2,3,1]],[[3,2,1,0],[0,3,1,2]],[[3,2,1,0],[1,3,2,0]],[[3,2,1,0],[3,0,2,1]]],"id":10,"nm":"V"},{"cp":[0,3,2,1],"ep":[0,2,1,3],"c":"Swap (diagonal)","e":"Swap (adjacent)","grp":"Both","variants":[[[0,3,2,1],[0,2,1,3]],[[0,3,2,1],[2,3,1,0]],[[0,3,2,1],[3,1,2,0]],[[0,3,2,1],[3,2,0,1]],[[1,0,3,2],[0,2,3,1]],[[1,0,3,2],[0,3,1,2]],[[1,0,3,2],[1,3,2,0]],[[1,0,3,2],[3,0,2,1]],[[2,1,0,3],[0,1,3,2]],[[2,1,0,3],[1,0,2,3]],[[2,1,0,3],[1,3,0,2]],[[2,1,0,3],[2,0,3,1]],[[3,2,1,0],[1,2,0,3]],[[3,2,1,0],[2,0,1,3]],[[3,2,1,0],[2,1,3,0]],[[3,2,1,0],[3,1,0,2]]],"id":11,"nm":"Y"},{"cp":[0,1,3,2],"ep":[0,3,2,1],"c":"Swap (adjacent)","e":"Swap (diagonal)","grp":"Both","variants":[[[0,1,3,2],[0,3,2,1]],[[0,2,1,3],[2,1,0,3]],[[0,2,3,1],[3,2,1,0]],[[0,3,1,2],[3,2,1,0]],[[1,0,2,3],[0,3,2,1]],[[1,2,0,3],[1,0,3,2]],[[1,3,0,2],[0,3,2,1]],[[1,3,2,0],[3,2,1,0]],[[2,0,1,3],[1,0,3,2]],[[2,0,3,1],[0,3,2,1]],[[2,1,3,0],[1,0,3,2]],[[2,3,1,0],[2,1,0,3]],[[3,0,2,1],[3,2,1,0]],[[3,1,0,2],[1,0,3,2]],[[3,1,2,0],[2,1,0,3]],[[3,2,0,1],[2,1,0,3]]],"id":12,"nm":"T"},{"cp":[0,1,3,2],"ep":[2,1,0,3],"c":"Swap (adjacent)","e":"Swap (diagonal)","grp":"Both","variants":[[[0,1,3,2],[2,1,0,3]],[[0,2,1,3],[0,3,2,1]],[[0,2,3,1],[1,0,3,2]],[[0,3,1,2],[1,0,3,2]],[[1,0,2,3],[2,1,0,3]],[[1,2,0,3],[3,2,1,0]],[[1,3,0,2],[2,1,0,3]],[[1,3,2,0],[1,0,3,2]],[[2,0,1,3],[3,2,1,0]],[[2,0,3,1],[2,1,0,3]],[[2,1,3,0],[3,2,1,0]],[[2,3,1,0],[0,3,2,1]],[[3,0,2,1],[1,0,3,2]],[[3,1,0,2],[3,2,1,0]],[[3,1,2,0],[0,3,2,1]],[[3,2,0,1],[0,3,2,1]]],"id":13,"nm":"F"},{"cp":[0,1,3,2],"ep":[0,1,3,2],"c":"Swap (adjacent)","e":"Swap (adjacent)","grp":"Both","variants":[[[0,1,3,2],[0,1,3,2]],[[0,2,1,3],[0,2,1,3]],[[0,2,3,1],[0,2,3,1]],[[0,3,1,2],[0,3,1,2]],[[1,0,2,3],[1,0,2,3]],[[1,2,0,3],[1,2,0,3]],[[1,3,0,2],[1,3,0,2]],[[1,3,2,0],[1,3,2,0]],[[2,0,1,3],[2,0,1,3]],[[2,0,3,1],[2,0,3,1]],[[2,1,3,0],[2,1,3,0]],[[2,3,1,0],[2,3,1,0]],[[3,0,2,1],[3,0,2,1]],[[3,1,0,2],[3,1,0,2]],[[3,1,2,0],[3,1,2,0]],[[3,2,0,1],[3,2,0,1]]],"id":14,"nm":"Ja"},{"cp":[0,1,3,2],"ep":[0,2,1,3],"c":"Swap (adjacent)","e":"Swap (adjacent)","grp":"Both","variants":[[[0,1,3,2],[0,2,1,3]],[[0,2,1,3],[1,0,2,3]],[[0,2,3,1],[1,2,0,3]],[[0,3,1,2],[2,0,1,3]],[[1,0,2,3],[3,1,2,0]],[[1,2,0,3],[1,3,2,0]],[[1,3,0,2],[2,3,1,0]],[[1,3,2,0],[2,1,3,0]],[[2,0,1,3],[3,0,2,1]],[[2,0,3,1],[3,2,0,1]],[[2,1,3,0],[0,2,3,1]],[[2,3,1,0],[2,0,3,1]],[[3,0,2,1],[3,1,0,2]],[[3,1,0,2],[0,3,1,2]],[[3,1,2,0],[0,1,3,2]],[[3,2,0,1],[1,3,0,2]]],"id":15,"nm":"Ra"},{"cp":[0,1,3,2],"ep":[1,0,2,3],"c":"Swap (adjacent)","e":"Swap (adjacent)","grp":"Both","variants":[[[0,1,3,2],[1,0,2,3]],[[0,2,1,3],[3,1,2,0]],[[0,2,3,1],[1,3,2,0]],[[0,3,1,2],[3,0,2,1]],[[1,0,2,3],[0,1,3,2]],[[1,2,0,3],[2,1,3,0]],[[1,3,0,2],[2,0,3,1]],[[1,3,2,0],[0,2,3,1]],[[2,0,1,3],[3,1,0,2]],[[2,0,3,1],[1,3,0,2]],[[2,1,3,0],[1,2,0,3]],[[2,3,1,0],[3,2,0,1]],[[3,0,2,1],[0,3,1,2]],[[3,1,0,2],[2,0,1,3]],[[3,1,2,0],[0,2,1,3]],[[3,2,0,1],[2,3,1,0]]],"id":16,"nm":"Rb"},{"cp":[0,1,3,2],"ep":[3,1,2,0],"c":"Swap (adjacent)","e":"Swap (adjacent)","grp":"Both","variants":[[[0,1,3,2],[3,1,2,0]],[[0,2,1,3],[0,1,3,2]],[[0,2,3,1],[2,1,3,0]],[[0,3,1,2],[3,1,0,2]],[[1,0,2,3],[0,2,1,3]],[[1,2,0,3],[0,2,3,1]],[[1,3,0,2],[3,2,0,1]],[[1,3,2,0],[1,2,0,3]],[[2,0,1,3],[0,3,1,2]],[[2,0,3,1],[2,3,1,0]],[[2,1,3,0],[1,3,2,0]],[[2,3,1,0],[1,3,0,2]],[[3,0,2,1],[2,0,1,3]],[[3,1,0,2],[3,0,2,1]],[[3,1,2,0],[1,0,2,3]],[[3,2,0,1],[2,0,3,1]]],"id":17,"nm":"Jb"},{"cp":[0,2,3,1],"ep":[0,3,1,2],"c":"3-cycle","e":"3-cycle","grp":"Both","variants":[[[0,1,3,2],[1,3,0,2]],[[0,2,1,3],[2,3,1,0]],[[0,2,3,1],[0,3,1,2]],[[0,3,1,2],[1,3,2,0]],[[1,0,2,3],[2,0,3,1]],[[1,2,0,3],[2,0,1,3]],[[1,3,0,2],[1,0,2,3]],[[1,3,2,0],[3,0,2,1]],[[2,0,1,3],[2,1,3,0]],[[2,0,3,1],[0,1,3,2]],[[2,1,3,0],[3,1,0,2]],[[2,3,1,0],[3,1,2,0]],[[3,0,2,1],[0,2,3,1]],[[3,1,0,2],[1,2,0,3]],[[3,1,2,0],[3,2,0,1]],[[3,2,0,1],[0,2,1,3]]],"id":18,"nm":"Gd"},{"cp":[0,2,3,1],"ep":[2,0,1,3],"c":"3-cycle","e":"3-cycle","grp":"Both","variants":[[[0,1,3,2],[2,3,1,0]],[[0,2,1,3],[2,0,3,1]],[[0,2,3,1],[2,0,1,3]],[[0,3,1,2],[2,1,3,0]],[[1,0,2,3],[3,2,0,1]],[[1,2,0,3],[3,0,2,1]],[[1,3,0,2],[3,1,2,0]],[[1,3,2,0],[3,1,0,2]],[[2,0,1,3],[0,2,3,1]],[[2,0,3,1],[0,2,1,3]],[[2,1,3,0],[0,3,1,2]],[[2,3,1,0],[0,1,3,2]],[[3,0,2,1],[1,2,0,3]],[[3,1,0,2],[1,3,2,0]],[[3,1,2,0],[1,3,0,2]],[[3,2,0,1],[1,0,2,3]]],"id":19,"nm":"Gb"},{"cp":[0,2,3,1],"ep":[3,0,2,1],"c":"3-cycle","e":"3-cycle","grp":"Both","variants":[[[0,1,3,2],[2,0,3,1]],[[0,2,1,3],[3,2,0,1]],[[0,2,3,1],[3,0,2,1]],[[0,3,1,2],[0,2,3,1]],[[1,0,2,3],[1,3,0,2]],[[1,2,0,3],[3,1,0,2]],[[1,3,0,2],[0,1,3,2]],[[1,3,2,0],[0,3,1,2]],[[2,0,1,3],[1,2,0,3]],[[2,0,3,1],[1,0,2,3]],[[2,1,3,0],[2,0,1,3]],[[2,3,1,0],[0,2,1,3]],[[3,0,2,1],[1,3,2,0]],[[3,1,0,2],[2,1,3,0]],[[3,1,2,0],[2,3,1,0]],[[3,2,0,1],[3,1,2,0]]],"id":20,"nm":"Gc"},{"cp":[0,2,3,1],"ep":[3,1,0,2],"c":"3-cycle","e":"3-cycle","grp":"Both","variants":[[[0,1,3,2],[3,2,0,1]],[[0,2,1,3],[1,3,0,2]],[[0,2,3,1],[3,1,0,2]],[[0,3,1,2],[1,2,0,3]],[[1,0,2,3],[2,3,1,0]],[[1,2,0,3],[0,3,1,2]],[[1,3,0,2],[0,2,1,3]],[[1,3,2,0],[2,0,1,3]],[[2,0,1,3],[1,3,2,0]],[[2,0,3,1],[3,1,2,0]],[[2,1,3,0],[3,0,2,1]],[[2,3,1,0],[1,0,2,3]],[[3,0,2,1],[2,1,3,0]],[[3,1,0,2],[0,2,3,1]],[[3,1,2,0],[2,0,3,1]],[[3,2,0,1],[0,1,3,2]]],"id":21,"nm":"Ga"}]};
+/* ============================================================
+   19. Registering your own algorithms
+   ============================================================
+   Lifted from AlgTrainer, which works on exactly the same cube model as the drills
+   here, so the logic is its own. What it does: it gives every last-layer shape a
+   short signature, keeps the algorithms you have registered against that signature,
+   and reads the turns you actually make — including the ones that move the centres
+   (M, wide turns) — back into ordinary notation.
+   ============================================================ */
+/** true when algorithms are written with M / r / f rather than plain face turns */
+const algSlice = () => { const el = $("optSlice"); return !el || el.checked; };
+
+/* --- 「いまの形」を表す文字列（パターンの見分け札） ---
+   OLL：上面と側面上段のうち、U色かどうかだけを並べる（PLL部分は見ない）
+   PLL：側面上段12枚の色を並べる。ただし「最後にどれだけAUFして揃えるか」が
+        違うだけの4つは同じ形なので、代表の1つにそろえる。 */
+const IDX_U    = [0,1,2,3,4,5,6,7,8];
+const IDX_SIDE = [9,10,11,18,19,20,36,37,38,45,46,47];
+const SIDE_CYC = {F:"R", R:"B", B:"L", L:"F"};
+function canonSide(s){
+  let best = s, t = s;
+  for(let i=0;i<3;i++){
+    t = t.split("").map(c => SIDE_CYC[c] || c).join("");
+    if(t < best) best = t;
+  }
+  return best;
+}
+function sigOf(mode, st){
+  if(mode === "OLL") return IDX_U.concat(IDX_SIDE).map(i => st[i] === "U" ? "1" : "0").join("");
+  return canonSide(IDX_SIDE.map(i => st[i]).join(""));
+}
+
+/* ============================================================
+   1. 登録したアルゴリズムの保管
+   ============================================================ */
+const STORE = "cs.algregs.v1";
+let REG = {OLL:{}, PLL:{}};
+/** 古い保存（AUFや回す順番のぶんだけ別々になっていたもの）を今の形にそろえる */
+function normalizeReg(){
+  ["OLL","PLL"].forEach(m => {
+    const out = {};
+    for(const k in REG[m]){
+      const nk = m === "PLL" ? canonSide(k) : k;
+      if(!out[nk]) out[nk] = [];
+      REG[m][k].forEach(r => {
+        r.alg = normTokens(String(r.alg).split(/\s+/).filter(Boolean)).join(" ");   // 並べかえ・まとめをそろえる
+        if(r.alg && !out[nk].some(x => x.alg === r.alg)) out[nk].push(r);
+      });
+    }
+    for(const k in out) out[k].sort((a,b) => (a.ts||0) - (b.ts||0));
+    REG[m] = out;
+  });
+}
+(function loadReg(){
+  try{
+    const v = JSON.parse(localStorage.getItem(STORE) || "null");
+    if(v && v.OLL && v.PLL){ REG = v; return; }
+  }catch(e){}
+  /* nothing here yet: anything registered in the stand-alone AlgTrainer, if it was
+     opened from the same place as this page, is taken over as it stands */
+  try{
+    const old = JSON.parse(localStorage.getItem("algtrainer.regs.v1") || "null");
+    if(old && old.OLL && old.PLL){ REG = old; localStorage.setItem(STORE, JSON.stringify(REG)); }
+  }catch(e){}
+})();
+// 古い保存を今の形に直すのは、下の道具がそろってからおこなう（起動のところで呼ぶ）
+function saveReg(){ try{ localStorage.setItem(STORE, JSON.stringify(REG)); }catch(e){} }
+function regList(mode, sig){ return (REG[mode] && REG[mode][sig]) || []; }
+function regAdd(mode, sig, alg, name, caseId, text){
+  if(!REG[mode][sig]) REG[mode][sig] = [];
+  const r = {alg: alg.join(" "), name: name || "", case: caseId, ts: Date.now()};
+  if(text) r.text = text;                       // 打ち込んだ書き方はそのまま残す
+  REG[mode][sig].push(r);
+  saveReg();
+}
+function regDel(mode, sig, i){
+  const a = REG[mode][sig];
+  if(!a) return;
+  a.splice(i,1);
+  if(!a.length) delete REG[mode][sig];
+  saveReg();
+}
+const toks = s => String(s).split(/\s+/).filter(Boolean);
+/** 一覧などに出す文字列。打ち込んだ書き方があればそれを、無ければ読み取った書き方を使う */
+const algText = r => (r && r.text && algSlice()) ? r.text : fmtToks(toks(r.alg));
+
+/* ============================================================
+   2. 回した手の記録（打ち消し・まとめ・並べかえ）
+   ============================================================ */
+const FACE_ORD = {U:0, D:1, R:2, L:3, F:4, B:5};
+const OPP_F    = {U:"D", D:"U", R:"L", L:"R", F:"B", B:"F"};
+const amtOf = t => t.endsWith("'") ? 3 : t.endsWith("2") ? 2 : 1;
+const mkTok = (f,a) => a === 1 ? f : a === 2 ? f+"2" : f+"'";
+/** 手の並びを決まった形にそろえる。
+    ・同じ面が続いたらまとめる（U U → U2、U U' → 消える）
+    ・向かい合う面（R と L など）は入れかえても結果が変わらないので、決まった順に並べる
+      （これで R L' と L' R が同じ形になり、M スライスの回し方の違いが消える） */
+function normTokens(a){
+  let changed = true;
+  while(changed){
+    changed = false;
+    for(let i=0;i<a.length-1;i++){
+      const f1 = a[i][0], f2 = a[i+1][0];
+      if(f1 === f2){
+        const s = (amtOf(a[i]) + amtOf(a[i+1])) % 4;
+        a.splice(i, 2);
+        if(s) a.splice(i, 0, mkTok(f1, s));
+        changed = true; break;
+      }
+      if(OPP_F[f1] === f2 && FACE_ORD[f1] > FACE_ORD[f2]){
+        const t = a[i]; a[i] = a[i+1]; a[i+1] = t;
+        changed = true; break;
+      }
+    }
+  }
+  return a;
+}
+const commute = (x,y) => x && y && OPP_F[x[0]] === y[0];
+
+/* ============================================================
+   2-b. 実際に回した手を読みとる（センターが入れ替わる分も追う）
+
+   キューブは「自分の中心（コア）から見た外層の回転」を送ってくる。
+   ・M を回すとコアごと回るので、送られてくるのは R と L' の2手。
+     このときキューブの向きは x' だけずれる。
+   ・奥の面は回さないので、いま奥にある面から来た手は f（手前の2層）。
+     このときも向きが z だけずれる。
+   ずれを覚えておけば、そのあとの手を人から見た名前（U など）に直せるし、
+   画面のキューブもセンターごと動かして見せられる。
+   ============================================================ */
+const A_ROT   = {"x":[18,19,20,21,22,23,24,25,26,15,12,9,16,13,10,17,14,11,27,28,29,30,31,32,33,34,35,53,52,51,50,49,48,47,46,45,38,41,44,37,40,43,36,39,42,8,7,6,5,4,3,2,1,0],"y":[6,3,0,7,4,1,8,5,2,45,46,47,48,49,50,51,52,53,9,10,11,12,13,14,15,16,17,29,32,35,28,31,34,27,30,33,18,19,20,21,22,23,24,25,26,36,37,38,39,40,41,42,43,44],"z":[42,39,36,43,40,37,44,41,38,6,3,0,7,4,1,8,5,2,24,21,18,25,22,19,26,23,20,15,12,9,16,13,10,17,14,11,33,30,27,34,31,28,35,32,29,47,50,53,46,49,52,45,48,51]};                    // 全体回転（x・y・z）の置換
+const ID54  = Array.from({length:54}, (_,i) => i);
+const compP = (a,b) => b.map(v => a[v]);       // a のあとに b（[j] = a[b[j]]）
+const powP  = (p,n) => { let r = ID54; const k = ((n%4)+4)%4; for(let i=0;i<k;i++) r = compP(r,p); return r; };
+const invP  = p => { const o = new Array(p.length); for(let i=0;i<p.length;i++) o[p[i]] = i; return o; };
+const applyPerm = (st,p) => { let o=""; for(let j=0;j<54;j++) o += st[p[j]]; return o; };
+/** 面の向きに合わせた全体回転（R の向き＝x、U の向き＝y、F の向き＝z） */
+const FOLLOW = {R:A_ROT.x, L:powP(A_ROT.x,3), U:A_ROT.y, D:powP(A_ROT.y,3), F:A_ROT.z, B:powP(A_ROT.z,3)};
+/** 送られてきた2手 → スライス（追いかける面, 回数） */
+const SLICE_PAIR = {
+  "R L'":["L",1], "R' L":["L",3], "R2 L2":["L",2],
+  "U D'":["D",1], "U' D":["D",3], "U2 D2":["D",2],
+  "F' B":["F",1], "F B'":["F",3], "F2 B2":["F",2]
+};
+const SL_NAME = {L:["M",1], R:["M",3], D:["E",1], U:["E",3], F:["S",1], B:["S",3]};
+function faceMapOf(ori){
+  const d = applyPerm(T_SOLVED, ori), m = {};
+  for(let f=0;f<6;f++) m[d[f*9+4]] = T_FACES[f];
+  return m;
+}
+/** 人から見た記号1つ（U・u・M・x など）を、
+    「キューブが送ってくる手」と「向きのずれ」に直す。読めなければ null。 */
+function hintStep(word, ori){
+  const m = /^([UDRLFBMESudrlfbmesxyz])(w|W)?(2|')?$/.exec(word);
+  if(!m) return null;
+  const ch = m[1], up = ch.toUpperCase();
+  const isRot   = "xyz".indexOf(ch) >= 0;
+  const isSlice = "MESmes".indexOf(ch) >= 0;
+  const wide    = !isRot && !isSlice && (!!m[2] || "udrlfb".indexOf(ch) >= 0);
+  const a = m[3] === "2" ? 2 : m[3] === "'" ? 3 : 1;
+  const fm = faceMapOf(ori), back = {};
+  for(const k in fm) back[fm[k]] = k;              // 人から見た面 → キューブの面
+  let kind, c, toks = [];
+  if(isRot){        kind = "rot";   c = back[{x:"R", y:"U", z:"F"}[ch]]; }
+  else if(isSlice){ kind = "slice"; c = back[{M:"L", E:"D", S:"F"}[up]];
+                    toks = [mkTok(OPP_F[c], a), mkTok(c, (4-a)%4)]; }
+  else if(wide){    kind = "wide";  c = back[up]; toks = [mkTok(OPP_F[c], a)]; }
+  else {            kind = "face";  c = back[up]; toks = [mkTok(c, a)]; }
+  return {name:word, kind:kind, c:c, a:a, toks:normTokens(toks),
+          ori: kind === "face" ? ori : compP(powP(FOLLOW[c], a), ori)};
+}
+
+/* ------------------------------------------------------------
+   同じ回し方でも、書き方は1つではない。
+   たとえば実機が送ってくる「R'」は、R' と回したのかもしれないし、
+   l'（左2層）と回して持ち替えが起きたのかもしれない。区別はつかない。
+   そこで手順を〈1手ずつの中身〉に分けて持っておき、
+   あとからボタンで「こっちの書き方」に切り替えられるようにする。
+   中身 = {kind:"face"|"wide"|"slice"|"rot", c:キューブの面, a:回す量}
+   c はキューブ自身の面なので、持ち替えが変わっても書き換えなくてよい。
+   ------------------------------------------------------------ */
+const ROT_NAME = {R:["x",1], L:["x",3], U:["y",1], D:["y",3], F:["z",1], B:["z",3]};
+/** 向きの分だけ回した量に直す（逆向きから見た面は、回す向きも逆になる） */
+const flipAmt = (s, a) => s === 1 ? a : (a === 2 ? 2 : 4 - a);
+/** その1手で、実機から送られてくる手 */
+function itemToks(it){
+  if(it.kind === "rot")  return [];
+  if(it.kind === "face") return [mkTok(it.c, it.a)];
+  if(it.kind === "wide") return [mkTok(OPP_F[it.c], it.a)];
+  return normTokens([mkTok(OPP_F[it.c], it.a), mkTok(it.c, (4 - it.a) % 4)]);
+}
+/** その1手を、いまの向きで見たときの書き方 */
+function itemWord(it, ori){
+  const u = faceMapOf(ori)[it.c];
+  if(it.kind === "rot"){   const r = ROT_NAME[u]; return mkTok(r[0], flipAmt(r[1], it.a)); }
+  if(it.kind === "face")   return mkTok(u, it.a);
+  if(it.kind === "wide")   return mkTok(u, it.a).toLowerCase();
+  const s = SL_NAME[u];    return mkTok(s[0], flipAmt(s[1], it.a));
+}
+/** その1手のあとの向き（面だけの手は向きを変えない） */
+const itemOri = (it, ori) => it.kind === "face" ? ori : compP(powP(FOLLOW[it.c], it.a), ori);
+/** 中身の並び → 書き方の並び */
+function itemsWords(items){
+  let ori = ID54;
+  return items.map(it => { const w = itemWord(it, ori); ori = itemOri(it, ori); return w; });
+}
+/** k 番目の手に用意できる別の書き方（前から順に切り替える） */
+function itemAlts(items, k){
+  const it = items[k];
+  if(!it || it.kind === "rot") return null;
+  if(it.kind === "slice")                                  // M → R と L' に分ける
+    return [{rep:[it]},
+            {rep:[{kind:"face", c:OPP_F[it.c], a:it.a},
+                  {kind:"face", c:it.c, a:(4 - it.a) % 4}]}];
+  const t = itemToks(it)[0], f = t[0], a = amtOf(t);
+  const out = [{rep:[{kind:"face", c:f, a:a}]},            // R'
+               {rep:[{kind:"wide", c:OPP_F[f], a:a}]}];    // l'
+  const nx = items[k+1];
+  if(nx && nx.kind !== "rot" && itemToks(nx).length === 1){ // 次の手といっしょに M にできるか
+    const pr = normTokens([t, itemToks(nx)[0]]);
+    const sp = pr.length === 2 && SLICE_PAIR[pr.join(" ")];
+    if(sp) out.push({rep:[{kind:"slice", c:sp[0], a:sp[1]}], eat:2});
+  }
+  return out;
+}
+/** k 番目の手を、次の書き方に切り替えた並びを返す */
+function cycleItem(items, k){
+  const alts = itemAlts(items, k);
+  if(!alts) return items;
+  const cur = items[k].kind === "wide" ? 1 : 0;
+  const nx  = alts[(cur + 1) % alts.length];
+  const out = items.slice();
+  out.splice(k, nx.eat || 1);
+  nx.rep.forEach((x,i) => out.splice(k+i, 0, x));
+  return out;
+}
+
+/** 送られてきた手の並びを、実際に回した手として読む。
+    hint に「登録してある手順の並び」を渡すと、次の手がそれと合うかぎり
+    その書き方（u や r など）として読む。合わなくなったら、そこからは既定のルールに戻す。
+    返り値 parts の t が人から見た名前、ori が最後の向きのずれ。 */
+/** 隣どうしの同じ面だけをまとめる（並べ替えはしない） */
+/** 90度いくつぶんか */
+const qCount = a => a.reduce((s,t) => s + (t.endsWith("2") ? 2 : 1), 0);
+/** 回している途中か（次の1手を作る手の一部を回しただけ、の状態）。
+    M や r、2回まわしなどは何回かに分けて送られてくるので、その途中を「合っている」と見る。 */
+function onTheWay(pend, next){
+  if(!pend.length || !next || !next.length) return false;
+  if(qCount(pend) >= qCount(next)) return false;
+  return pend.every(t => next.some(u => u[0] === t[0]));
+}
+function readMoves(list, hint, startOri){
+  const parts = [];
+  const hw = (hint || []).filter(Boolean);
+  let ori = startOri || ID54, hi = 0, useHint = hw.length > 0;
+  for(let i=0;i<list.length;i++){
+    let done = false;
+    while(useHint && hi < hw.length){                 // 登録してある手順と見くらべる
+      const st = hintStep(hw[hi], ori);
+      if(!st){ useHint = false; break; }
+      if(!st.toks.length){ ori = st.ori; hi++; continue; }      // x y z は送られてこない
+      if(st.toks.every((t,k) => list[i+k] === t)){
+        parts.push({t:st.name, raw:st.toks, i:i, n:st.toks.length, kind:st.kind, hint:true});
+        ori = st.ori; hi++; i += st.toks.length - 1; done = true;
+      }else{
+        useHint = false;                              // 手順から外れたら、以後は使わない
+      }
+      break;
+    }
+    if(done) continue;
+    const a = list[i], b = list[i+1];
+    const key = b ? a + " " + b : "";
+    let kind, c, n, used;
+    /* 登録にない手は、2層回し（r・l・f など）は考えず、
+       いつもの向きのまま1面だけ回したものとして読む。M・E・S だけはまとめる。 */
+    if(SLICE_PAIR[key]){ kind = "slice"; c = SLICE_PAIR[key][0]; n = SLICE_PAIR[key][1]; used = 2; }
+    else { kind = "face"; c = a[0]; n = amtOf(a); used = 1; }
+    const u = faceMapOf(ori)[c];
+    let text;
+    if(kind === "face")      text = mkTok(u, n);
+    else if(kind === "wide") text = mkTok(u, n).toLowerCase();
+    else { const s = SL_NAME[u]; text = mkTok(s[0], s[1] === 1 ? n : (n === 2 ? 2 : 4-n)); }
+    parts.push({t:text, raw:list.slice(i,i+used), i:i, n:used, kind:kind});
+    if(kind !== "face") ori = compP(powP(FOLLOW[c], n), ori);
+    i += used - 1;
+  }
+  return {parts:parts, ori:ori};
+}
+/** 打ち込まれた手順（スペース区切り）を読む。
+    U R F D L B ／ 持ち替え u r f d l b（Rw も可）／ スライス M E S ／ 持ち替えだけの x y z。
+    返り値 {reported:[…], text:"…"}、読めないときは {err:"…"}。 */
+function algWords(text){
+  const raw = String(text||"").replace(/[’‘´`]/g,"'").replace(/[、,，]/g," ").trim();
+  if(!raw) return {err:"手順が空です。"};
+  const items0 = raw.split(/\s+/);
+  /* 先頭の y 系（持ち替え）は、AUF を回すのと同じ働きをする。
+     どちらで始めても同じ形がそろうので、U の書き方にそろえておく。 */
+  let ky = 0, i0 = 0;
+  while(i0 < items0.length){
+    const my = /^y(2|')?$/.exec(items0[i0]);
+    if(!my) break;
+    ky = (ky + (my[1] === "2" ? 2 : my[1] === "'" ? 3 : 1)) % 4;
+    i0++;
+  }
+  const items = (i0 ? (ky ? [mkTok("U", ky)] : []) : []).concat(items0.slice(i0));
+  if(!items.length) return {err:"手が空です。"};
+  return {words: items};
+}
+/** 打ち込まれた手順 → 1手ずつの中身（書き方の切り替えに使う） */
+function algItems(text){
+  const w = algWords(text);
+  if(w.err) return {err:w.err};
+  let ori = ID54;
+  const out = [];
+  for(const it of w.words){
+    const s = hintStep(it, ori);
+    if(!s) return {err:"「" + it + "」は手として読み取れません。"};
+    out.push({kind:s.kind, c:s.c, a:s.a});
+    ori = s.ori;
+  }
+  return {items: out};
+}
+function parseAlgText(text){
+  const w = algWords(text);
+  if(w.err) return {err:w.err};
+  let ori = ID54;
+  const rep = [];
+  for(const it of w.words){
+    const st = hintStep(it, ori);
+    if(!st) return {err:"「" + it + "」は手として読み取れません。"};
+    st.toks.forEach(t => rep.push(t));
+    ori = st.ori;
+  }
+  if(!rep.length) return {err:"持ち替えだけでは登録できません。"};
+  return {reported: normTokens(rep), text: w.words.join(" ")};
+}
+/** 表示用の札。まとめない設定のときは、送られてきたままの手を並べる */
+function viewParts(list, hint){
+  const r = readMoves(list, hint);
+  if(algSlice()) return r.parts;
+  return list.map((t,i) => ({t:t, raw:[t], i:i, n:1, kind:"face"}));
+}
+const fmtToks = (list, hint) => viewParts(list, hint).map(p => p.t).join(" ");
+const isU = t => t && t[0] === "U";
+/** AUF（先頭のU回し）を n 手ぶんの札にする */
+const AUF_TOK = ["", "U", "U2", "U'"];
+
+/* PLL の呼び名。標準のアルゴリズムを1手ずつ当てはめて、どの並びがどの名前かを
+   機械的に割り出したもの（21ケースが1対1で対応することを確かめてある）。 */
+const PLL_NAME = {1:"H", 2:"Z", 3:"Ub", 4:"Ua", 5:"E", 6:"Aa", 7:"Ab", 8:"Nb", 9:"Na",
+                  10:"V", 11:"Y", 12:"T", 13:"F", 14:"Ja", 15:"Ra", 16:"Rb", 17:"Jb",
+                  18:"Gd", 19:"Gb", 20:"Gc", 21:"Ga"};
+const pllName = id => PLL_NAME[id] || ("No." + id);
+/** 盤面（PLLの札）→ どのケースか。通し練習で、そろえ終わった上面のあとに使う */
+let PLL_SIG = null;
+function pllCaseOf(st){
+  if(!PLL_SIG){
+    PLL_SIG = {};
+    TDATA.pll.forEach(c => c.variants.forEach(v => {
+      let s = tBuild([0,0,0,0],[0,0,0,0], v[0], v[1]);
+      for(let a=0;a<4;a++){ PLL_SIG[sigOf("PLL", s)] = c.id; s = tApply(s,"U"); }
+    }));
+  }
+  return TDATA.pll.find(c => c.id === PLL_SIG[sigOf("PLL", st)]) || null;
+}
+/* OLL の番号。このファイルの中の番号と、世の中でふつうに使われる OLL 1〜57 の番号は
+   並びが違うので、標準のアルゴリズムを1本ずつ当てはめて対応を出してある（1対1で確認ずみ）。 */
+const OLL_STD = {"57":1,"56":2,"55":3,"54":4,"40":5,"36":6,"42":7,"37":8,"39":9,"43":10,"41":11,"38":12,"18":13,"15":14,"17":15,"16":16,"53":17,"52":18,"51":19,"50":20,"7":21,"6":22,"2":23,"1":24,"3":25,"4":26,"5":27,"23":28,"25":29,"27":30,"24":31,"26":32,"10":33,"9":34,"32":35,"34":36,"35":37,"33":38,"14":39,"13":40,"31":41,"29":42,"28":43,"30":44,"12":45,"11":46,"45":47,"44":48,"46":49,"47":50,"19":51,"20":52,"48":53,"49":54,"22":55,"21":56,"8":57};
+const ollName = id => "No." + (OLL_STD[id] || id);
+
+
+/* ---- writing the registrations out, and reading them back ---- */
+const OLL_BY_STD = {};  for(const k in OLL_STD)  OLL_BY_STD[OLL_STD[k]] = +k;
+const PLL_BY_NAME = {}; for(const k in PLL_NAME) PLL_BY_NAME[PLL_NAME[k].toUpperCase()] = +k;
+const caseLabel = (mode, id) => mode === "OLL" ? "OLL " + (OLL_STD[id] || id) : "PLL " + pllName(id);
+
+/** そのケースが出しうる盤面（向きちがいも全部） */
+function caseStatesOf(mode, id){
+  if(mode === "OLL"){
+    const c = TDATA.cases.find(x => x.id === id);
+    return c ? [0,1,2,3].map(r => tBuild(tRotL(c.cts,r), tRotL(c.efs,r), [0,1,2,3], [0,1,2,3])) : [];
+  }
+  const c = TDATA.pll.find(x => x.id === id);
+  return c ? c.variants.map(v => tBuild([0,0,0,0],[0,0,0,0], v[0], v[1])) : [];
+}
+function solvedIn(mode, s){
+  if(mode === "OLL") return s.slice(0,9) === "UUUUUUUUU";
+  for(let m=0;m<4;m++){ let t = s; for(let i=0;i<m;i++) t = tApply(t,"U"); if(t === T_SOLVED) return true; }
+  return false;
+}
+/** 登録の札（sig）から、その形で回す AUF を割り出す */
+function aufForKey(mode, caseId, key){
+  const sts = caseStatesOf(mode, caseId);
+  for(let a=0;a<4;a++)                       // AUF なしで書けるならそのほうが読みやすい
+    for(const st of sts){
+      let s = st; for(let i=0;i<a;i++) s = tApply(s,"U");
+      if(sigOf(mode, s) === key) return AUF_TOK[a];
+    }
+  return "";
+}
+/** every registered algorithm, laid out to be read and edited by hand */
+function algBlock(){
+  const out = [];
+  ["OLL","PLL"].forEach(mode => {
+    const byCase = {};
+    for(const key in REG[mode]) (REG[mode][key] || []).forEach(r => {
+      (byCase[r.case] = byCase[r.case] || []).push({auf: aufForKey(mode, r.case, key), r: r});
+    });
+    const ids = Object.keys(byCase).map(Number).sort((a,b) => mode === "OLL"
+      ? (OLL_STD[a] || a) - (OLL_STD[b] || b)
+      : String(pllName(a)).localeCompare(String(pllName(b))));
+    if(!ids.length) return;
+    out.push("### " + mode, "");
+    ids.forEach(id => {
+      out.push("[" + caseLabel(mode, id) + "]");
+      byCase[id].forEach(x => {
+        const body = x.r.text || fmtToks(toks(x.r.alg));
+        out.push((x.auf ? x.auf + " " : "") + body + (x.r.name ? "   ; " + x.r.name : ""));
+      });
+      out.push("");
+    });
+  });
+  return out;
+}
+/** 1行の手順を、その形のどこに登録すればよいか決める */
+function placeAlg(mode, id, p){
+  const rep = p.reported.slice(), words = p.text.split(" ").filter(Boolean);
+  let auf = "";
+  if(rep.length && isU(rep[0]) && !commute(rep[0], rep[1])){
+    auf = rep.shift();
+    if(words.length && /^U(2|')?$/.test(words[0])) words.shift();
+  }
+  if(rep.length) for(const st of caseStatesOf(mode, id)){
+    let s = st; if(auf) s = tApply(s, auf);
+    let t = s; for(const m of rep) t = tApply(t, m);
+    if(solvedIn(mode, t)) return {key: sigOf(mode, s), body: rep, text: words.join(" ")};
+  }
+  for(const st of caseStatesOf(mode, id)){          // 先頭の U が手順の一部だったとき
+    let t = st; for(const m of p.reported) t = tApply(t, m);
+    if(solvedIn(mode, t)) return {key: sigOf(mode, st), body: p.reported.slice(), text: p.text};
+  }
+  return null;
+}
+function parseExport(txt){
+  const add = {OLL:{}, PLL:{}}, bad = [];
+  let mode = null, id = null, n = 0;
+  String(txt).split(/\r?\n/).forEach(raw => {
+    let line = raw.replace(/^﻿/, "").trim();
+    if(!line || line[0] === "#") return;
+    const h = /^\[\s*(OLL|PLL)\s+([A-Za-z0-9.]+)\s*\]$/i.exec(line);
+    if(h){
+      mode = h[1].toUpperCase();
+      const t = h[2].replace(/^No\.?/i, "");
+      id = mode === "OLL" ? (OLL_BY_STD[+t] || null) : (PLL_BY_NAME[t.toUpperCase()] || null);
+      if(!id){ bad.push(line); mode = null; }
+      return;
+    }
+    if(!mode){ bad.push(line); return; }
+    let name = "";
+    const ci = line.indexOf(";");
+    if(ci >= 0){ name = line.slice(ci+1).trim(); line = line.slice(0, ci).trim(); }
+    if(!line) return;
+    const p = parseAlgText(line);
+    if(p.err){ bad.push(line); return; }
+    const got = placeAlg(mode, id, p);
+    if(!got){ bad.push(line + "（この形ではそろいません）"); return; }
+    (add[mode][got.key] = add[mode][got.key] || []).push(
+      {alg: got.body.join(" "), name: name, case: id, ts: Date.now(), text: got.text});
+    n++;
+  });
+  return {add: add, bad: bad, n: n};
+}
 
 const T_FACES = ["U","R","F","D","L","B"];
 const T_SOLVED = T_FACES.map(f => f.repeat(9)).join("");
@@ -5644,17 +6629,78 @@ function tParseRetry(text){
 let retrySeq = tParseRetry(LS.get("t.retry", T_RETRY_DEF));
 
 /* ============================================================
-   21. One trainer — the same drill for OLL and for PLL
+   20b. The two windows registering uses
+   ============================================================ */
+let regCb = null, edCtx = null;
+const regOpen = () => $("regModal").classList.contains("on");
+const edOpen  = () => $("edModal").classList.contains("on");
+const algBusy = () => regOpen() || edOpen();
+function openReg(o){
+  $("rgPat").textContent = o.pat; $("rgAuf").textContent = o.auf; $("rgAlg").textContent = o.alg;
+  $("rgName").value = ""; regCb = o;
+  $("regModal").classList.add("on");
+  setTimeout(() => $("rgName").focus(), 30);
+}
+function closeReg(how){
+  if(!regCb) return;
+  const cb = regCb, nm = $("rgName").value.trim();
+  regCb = null; $("regModal").classList.remove("on");
+  if(how === "yes") cb.onYes(nm); else if(how === "edit") cb.onEdit(nm); else cb.onNo();
+}
+$("rgYes").onclick  = () => closeReg("yes");
+$("rgNo").onclick   = () => closeReg("no");
+$("rgEdit").onclick = () => closeReg("edit");
+
+function edSay(t, cls){ const el = $("edMsg");
+  el.textContent = t || "\u00a0"; el.className = "edmsg" + (cls ? " " + cls : ""); }
+function openEd(ctx){
+  edCtx = ctx;
+  $("edTitle").textContent = ctx.title; $("edPat").textContent = ctx.pat;
+  $("edText").value = ctx.text || ""; $("edName").value = ctx.name || "";
+  edSay("", ""); $("edModal").classList.add("on");
+  setTimeout(() => { $("edText").focus(); $("edText").select(); }, 30);
+}
+function closeEd(){ const c = edCtx; edCtx = null;
+  $("edModal").classList.remove("on"); if(c && c.done) c.done(); }
+$("edCancel").onclick = closeEd;
+$("edText").oninput = () => edSay("", "");
+$("edCheck").onclick = () => { if(!edCtx) return;
+  const r = edCtx.verify($("edText").value);
+  if(r.ok){ if(r.show) $("edText").value = r.show; edSay(r.msg || "That solves it.", "ok"); }
+  else edSay(r.msg || "That does not solve this shape.", "err"); };
+$("edSave").onclick = () => { if(!edCtx) return;
+  const r = edCtx.verify($("edText").value);           /* always checked on the way out */
+  if(!r.ok){ edSay(r.msg || "That does not solve this shape, so it cannot be kept.", "err"); return; }
+  edCtx.save(r, $("edName").value.trim()); closeEd(); };
+document.addEventListener("keydown", e => {
+  if(edOpen()){
+    if(e.key === "Escape"){ closeEd(); e.preventDefault(); }
+    else if(e.key === "Enter"){ $("edCheck").click(); e.preventDefault(); }
+    return;
+  }
+  if(!regOpen()) return;
+  const inName = e.target && e.target.id === "rgName";
+  if(e.key === "Enter"){ closeReg("yes"); e.preventDefault(); }
+  else if(e.key === "Escape"){ closeReg("no"); e.preventDefault(); }
+  else if(!inName && "yY".indexOf(e.key) >= 0 && e.key.length === 1){ closeReg("yes"); e.preventDefault(); }
+  else if(!inName && "nN".indexOf(e.key) >= 0 && e.key.length === 1){ closeReg("no"); e.preventDefault(); }
+});
+
+/* ============================================================
+   21. One trainer — OLL, PLL, or the two of them in one go
    ============================================================ */
 function makeTrainer(root, kind){
   const q = c => root.querySelector("." + c);
-  const CASES = kind === "OLL" ? TDATA.cases : TDATA.pll;
-  const GROUPS = kind === "OLL"
+  const full    = kind === "FULL";          /* the OLL and then the PLL, in one go */
+  const ollSide = kind !== "PLL";           /* the questions are OLL shapes */
+  const CASES = ollSide ? TDATA.cases : TDATA.pll;
+  const GROUPS = ollSide
     ? [["Cross","Cross (OCLL, 7)"], ["Line","Line (15)"],
        ["L shape","L shape (27)"], ["Dot","Dot (8)"]]
     : [["Edges only","Edges only (4)"], ["Corners only","Corners only (3)"], ["Both","Both (14)"]];
-  const groupOf = c => kind === "OLL" ? c.shape : c.grp;
+  const groupOf = c => ollSide ? c.shape : c.grp;
   const LSK = s => "t." + kind + "." + s;
+  const on = (c, d) => { const el = q(c); return el ? el.checked : d; };
 
   const topCells = tBuildTop(q("ttop"));
   const cells3d  = tBuild3d(q("tcube3d"));
@@ -5681,7 +6727,18 @@ function makeTrainer(root, kind){
   })();
   applyView();
 
-  let state = T_SOLVED, caseStart = T_SOLVED, curCase = null;
+  let state = T_SOLVED, caseStart = T_SOLVED, phaseStart = T_SOLVED;
+  let curCase = null, curPll = null;
+  let phase = ollSide ? "OLL" : "PLL";      /* which face the turns are being read against */
+  let hist = [], moveLog = [], doneParts = [], cands = [];
+  /* the full drill: from the moment the top comes good to the first turn of the PLL
+     that is not an AUF — which is how long the case took to recognise */
+  let recT0 = null, recPll = null;
+  let recT = (function(){ try{ const o = JSON.parse(LS.get(LSK("recog"), "{}"));
+    return (o && typeof o === "object") ? o : {}; }catch(e){ return {}; } })();
+  const saveRecT = () => { try{ LS.set(LSK("recog"), JSON.stringify(recT)); }catch(e){} };
+  const elapsed = () => tRun ? performance.now() - tBase : 0;
+  const sig = st => sigOf(phase, st);
   let queue = [], qi = 0, history = [], histIdx = -1, loop = false;
   let moveCount = 0, solvedCount = 0, finished = false, advToken = 0;
   let lastFace = null, lastDir = 0, ollMs = null;
@@ -5720,6 +6777,42 @@ function makeTrainer(root, kind){
     /* the clock shows the whole run; what is kept is the OLL alone */
     q("ttimeNow").textContent = fmtT(ms);
     tLog.push(ollMs != null ? ollMs : ms); tStats(); return ms; }
+  /** how long that PLL shape took to see, kept by shape */
+  function noteRecog(ms){
+    if(!recPll || !(ms >= 0)) return;
+    const k = String(recPll.id);
+    (recT[k] = recT[k] || []).push(Math.round(ms));
+    while(recT[k].length > 40) recT[k].shift();
+    saveRecT(); paintRecog();
+  }
+  let recDesc = LS.get(LSK("recdesc"), "1") === "1";
+  /** the PLL shapes, slowest to see first */
+  function paintRecog(){
+    const box = q("trecav"), note = q("trecnote"), btn = q("tbtnRecSort");
+    if(!box) return;
+    if(btn) btn.textContent = recDesc ? "Slowest first \u2193" : "Fastest first \u2191";
+    const rows = [];
+    for(const c of TDATA.pll){
+      const list = recT[String(c.id)];
+      if(!list || !list.length) continue;
+      const t = tAo5(list);
+      if(t.mean == null) continue;
+      rows.push({c: c, t: t});
+    }
+    rows.sort((a, b) => recDesc ? b.t.mean - a.t.mean : a.t.mean - b.t.mean);
+    if(!rows.length){
+      box.innerHTML = '<div class="tavgnone">Nothing yet \u2014 how long each PLL takes to '
+        + 'see, from the moment the top comes good to the first turn that is not an AUF.</div>';
+      if(note) note.textContent = ""; return;
+    }
+    const slow = rows.reduce((m, r) => Math.max(m, r.t.mean), 0);
+    if(note) note.textContent = rows.length + " of 21 shapes  \u00b7  Ao5 of the last five";
+    box.innerHTML = rows.map(r =>
+      '<div class="tavgcard' + (r.t.mean > slow*0.75 && rows.length > 2 ? " slow" : "") + '">'
+      + '<span class="nm">' + (r.c.nm || r.c.id) + '</span>'
+      + '<span><span class="av">' + fmtT(r.t.mean) + '</span>'
+      + '<span class="sub"> s  \u00b7  ' + r.t.n + (r.t.ao5 ? " Ao5" : "") + '</span></span></div>').join("");
+  }
   function noteTime(ms){
     if(!curCase || !(ms > 0)) return;
     const k = String(curCase.id);
@@ -5774,17 +6867,127 @@ function makeTrainer(root, kind){
   }
 
   function render(){
-    for(let i=0;i<54;i++) cells3d[i].style.background = T_COLOR[state[i]];
-    /* for OLL only the orientation matters, so everything but the U colour is grey */
-    const flat = kind === "OLL";
+    /* M and the wide turns carry the centres with them, so the cube on screen is
+       drawn the way it now sits in the hand, not the way the case was built */
+    const d = displayState();
+    const view = applyPerm(state, d.oriD);
+    for(let i=0;i<54;i++) cells3d[i].style.background = T_COLOR[view[i]];
+    /* while the OLL is what is being worked on, only the top colour matters */
+    const flat = phase === "OLL";
     for(const k in topCells)
       topCells[k].setAttribute("fill",
-        flat ? (state[k] === "U" ? "var(--cU)" : "var(--gray)") : T_COLOR[state[k]]);
+        flat ? (view[k] === "U" ? "var(--cU)" : "var(--gray)") : T_COLOR[view[k]]);
     q("tmoveCount").textContent = moveCount;
+    renderHist(d);
   }
 
+  /* ---- the turns made, read against whatever has been registered ---- */
+  /** the algorithms registered for the shape now up, whichever AUF it is seen from */
+  function findCands(){
+    cands = [];
+    for(let a=0;a<4;a++){
+      let st = phaseStart;
+      for(let i=0;i<a;i++) st = tApply(st, "U");
+      const key = sigOf(phase, st);
+      regList(phase, key).forEach((r, idx) => {
+        const alg = toks(r.alg), auf = AUF_TOK[a];
+        cands.push({auf: auf, alg: alg, full: (auf ? [auf] : []).concat(alg),
+                    sig: key, idx: idx, name: r.name, text: algText(r)});
+      });
+    }
+  }
+  /** one registered algorithm, step by step: the word, the cube after it, the grip */
+  function candSteps(c){
+    if(c._steps) return c._steps;
+    const words = (c.auf ? [c.auf] : [])
+      .concat(String(c.text || fmtToks(c.alg)).split(/\s+/).filter(Boolean));
+    const out = [];
+    let st = phaseStart, ori = ID54, oriD = ID54;
+    for(const w of words){
+      const step = hintStep(w, ori);
+      if(!step) break;
+      for(const t of step.toks) st = tApply(st, t);
+      ori = step.ori;
+      if(step.kind !== "rot" && step.kind !== "face")
+        oriD = compP(powP(FOLLOW[step.c], step.a), oriD);
+      out.push({w: w, st: st, ori: ori, oriD: oriD, toks: step.toks});
+    }
+    c._steps = out;
+    return out;
+  }
+  /** how far along one of them the cube has got. The cube itself is the judge, so a
+      different way of writing the same turns still counts as being on the way. */
+  function bestMatch(){
+    let best = null;
+    for(const c of cands){
+      const steps = candSteps(c);
+      if(!steps.length) continue;
+      let j = 0, idx = -1;
+      while(j < steps.length && !steps[j].toks.length) j++;       /* a regrip is not a turn */
+      for(let i=0;i<moveLog.length && j<steps.length;i++){
+        if(moveLog[i].st === steps[j].st){
+          j++; idx = i;
+          while(j < steps.length && !steps[j].toks.length) j++;
+        }
+      }
+      const pend = moveLog.slice(idx+1).map(x => x.mv);
+      const nxt  = steps[j];
+      const way  = onTheWay(pend, nxt && nxt.toks);               /* halfway into a turn */
+      const sc = j*1000 + (way ? 500 : 0) - pend.length;
+      if(!best || sc > best.sc) best = {c: c, steps: steps, j: j, pend: pend, way: way, sc: sc};
+    }
+    return (best && (best.j > 0 || best.way)) ? best : null;
+  }
+  /** the tokens to print, and the grip the cube is now held in */
+  function displayState(){
+    const known = cands.length > 0;
+    const best = bestMatch();
+    if(!best){
+      const r = readMoves(hist);
+      return {parts: viewParts(hist).map(x => ({t: x.t, cls: known ? "ng" : "n"})),
+              ori: r.ori, oriD: r.ori};
+    }
+    const out = [];
+    for(let i=0;i<best.j;i++) out.push({t: best.steps[i].w, cls: "ok"});
+    const ori0  = best.j ? best.steps[best.j-1].ori  : ID54;
+    const oriD0 = best.j ? best.steps[best.j-1].oriD : ID54;
+    const pend = normTokens(best.pend.slice());
+    const rr = readMoves(pend, null, ori0);
+    /* turning U after the algorithm is finished is the closing AUF, not a mistake */
+    const tailAuf = best.j >= best.steps.length && rr.parts.length
+                    && rr.parts.every(x => /^U(2|')?$/.test(x.t));
+    rr.parts.forEach(x => out.push({t: x.t, cls: tailAuf ? "auf2" : best.way ? "ok" : "ng"}));
+    const delta = compP(rr.ori, invP(ori0));
+    return {parts: out, ori: rr.ori, oriD: compP(delta, oriD0)};
+  }
+  function renderHist(d){
+    const box = q("hist");
+    if(!box) return;
+    if(!hist.length && !doneParts.length){
+      box.innerHTML = '<span class="ph">Nothing turned yet.</span>';
+      return;
+    }
+    if(!d) d = displayState();
+    const aufTop = d.parts.length && /^U(2|')?$/.test(d.parts[0].t);
+    let html = "";
+    doneParts.forEach(ps => {                       /* what the OLL took, in the full drill */
+      ps.forEach(x => html += `<span class="tk ${x.cls}">${esc(x.t)}</span>`);
+      html += '<span class="brk"></span>';          /* the PLL starts on its own line */
+    });
+    d.parts.forEach((x, i) => {
+      const auf = (i === 0 && aufTop) ? " auf" : "";
+      if(x.cls === "auf2" && i > 0 && d.parts[i-1].cls !== "auf2") html += '<span class="sep">/</span>';
+      html += `<span class="tk ${x.cls}${auf}">${esc(x.t)}</span>`;
+      if(i === 0 && auf && d.parts.length > 1) html += '<span class="sep">/</span>';
+    });
+    box.innerHTML = html;
+  }
+
+  /* the groups are no longer picked from: every case is in play */
   function buildGroups(){
-    q("tgroups").innerHTML = GROUPS.map(([v,t]) =>
+    const box = q("tgroups");
+    if(!box) return;
+    box.innerHTML = GROUPS.map(([v,t]) =>
       `<label><input type="checkbox" class="tgrp" value="${v}" checked> ${t}</label>`).join("");
     root.querySelectorAll(".tgrp").forEach(cb => cb.onchange = () => {
       if(!activeCases().length){ cb.checked = true; return; }
@@ -5792,55 +6995,120 @@ function makeTrainer(root, kind){
     });
   }
   function activeCases(){
-    const on = [...root.querySelectorAll(".tgrp")].filter(c => c.checked).map(c => c.value);
-    return CASES.filter(c => on.includes(groupOf(c)));
+    const boxes = [...root.querySelectorAll(".tgrp")];
+    if(!boxes.length) return CASES.slice();
+    const sel = boxes.filter(c => c.checked).map(c => c.value);
+    return CASES.filter(c => sel.includes(groupOf(c)));
   }
+  /** every shape this case can come up as */
+  function variantsOf(c){
+    const out = [];
+    if(ollSide){
+      const n = on("toptAuf", true) ? 4 : 1;
+      for(let r=0;r<n;r++){
+        const cts = tRotL(c.cts, r), efs = tRotL(c.efs, r);
+        out.push({cts: cts, efs: efs, st: tBuild(cts, efs, [0,1,2,3], [0,1,2,3])});
+      }
+    }else{
+      const vs = on("toptAuf", true) ? c.variants : [[c.cp, c.ep]];
+      vs.forEach(v => out.push({st: tBuild([0,0,0,0], [0,0,0,0], v[0], v[1])}));
+    }
+    return out;
+  }
+  const isKnown = st => {
+    const ph = ollSide ? "OLL" : "PLL";
+    for(let a=0;a<4;a++){
+      let s2 = st; for(let i=0;i<a;i++) s2 = tApply(s2, "U");
+      if(regList(ph, sigOf(ph, s2)).length) return true;
+    }
+    return false;
+  };
+  const passFilter = st => {
+    const f = q("toptFilter") ? q("toptFilter").value : "all";
+    return f === "all" ? true : f === "new" ? !isKnown(st) : isKnown(st);
+  };
   function buildQueue(){
-    const list = activeCases();
+    const list = activeCases().filter(c => variantsOf(c).some(v => passFilter(v.st)));
     queue = q("toptOrder").value === "random"
       ? tShuffled(list.length).map(i => list[i]) : list.slice();
     qi = 0;
+    return queue.length;
   }
   /** one question, fixed here so it can be put back exactly as it was */
+  function pickState(c){
+    const vs = variantsOf(c).filter(v => passFilter(v.st));
+    if(!vs.length) return null;
+    const v = vs[Math.floor(Math.random()*vs.length)];
+    if(ollSide && (full || on("toptPll", false))){
+      const solvedLL = (cp, ep) => [0,1,2,3].some(r =>
+        tRotL([0,1,2,3], r).join() === cp.join() && tRotL([0,1,2,3], r).join() === ep.join());
+      for(let k=0;k<30;k++){
+        const [cp, ep] = tRandomLL();
+        if(full && solvedLL(cp, ep)) continue;     /* the full drill always leaves a PLL */
+        return tBuild(v.cts, v.efs, cp, ep);
+      }
+    }
+    return v.st;
+  }
   function makeEntry(c){
-    if(kind === "PLL"){
-      const v = q("toptAuf").checked
-        ? c.variants[Math.floor(Math.random()*c.variants.length)] : [c.cp, c.ep];
-      return {c: c, start: tBuild([0,0,0,0], [0,0,0,0], v[0], v[1])};
+    const st = pickState(c);
+    return st ? {c: c, start: st} : null;
+  }
+  /** the heading, which follows the face being worked on */
+  function paintCase(){
+    if(phase === "PLL" && (full || !ollSide)){
+      const c = full ? curPll : curCase;
+      q("tcaseTitle").textContent = c ? "PLL " + pllName(c.id) : "PLL";
+      q("tcaseSub").textContent = c ? c.grp + "　Corners: " + c.c + "　Edges: " + c.e
+                                    : "the last layer is already in place";
+      return;
     }
-    let cts = c.cts.slice(), efs = c.efs.slice();
-    if(q("toptAuf").checked){
-      const r = Math.floor(Math.random()*4); cts = tRotL(cts, r); efs = tRotL(efs, r);
-    }
-    const [cp, ep] = q("toptPll").checked ? tRandomLL() : [[0,1,2,3],[0,1,2,3]];
-    return {c: c, start: tBuild(cts, efs, cp, ep)};
+    const c = curCase;
+    q("tcaseTitle").textContent = c ? "OLL " + ollName(c.id) + " / 57" : "—";
+    q("tcaseSub").textContent = c ? c.shape + "　Oriented edges " + c.oe + " / corners " + c.oc : "";
   }
   function showEntry(i){
     histIdx = i;
     const e = history[i];
     curCase = e.c; caseStart = e.start;
     restart();
-    q("tcaseTitle").textContent = kind === "OLL"
-      ? "OLL No." + e.c.id + " / 57　" + e.c.shape
-      : "PLL No." + e.c.id + " / 21";
-    q("tcaseSub").textContent = kind === "OLL"
-      ? "Oriented edges " + e.c.oe + " / corners " + e.c.oc
-      : "Corners: " + e.c.c + "　Edges: " + e.c.e;
-    q("tremain").textContent = (queue.length - qi) + " cases";
+    q("tremain").textContent = Math.max(0, queue.length - qi) + " cases";
   }
   function restart(){
     advToken++;
-    state = caseStart; moveCount = 0; finished = false; ollMs = null;
+    state = caseStart; phaseStart = caseStart; moveCount = 0; finished = false; ollMs = null;
+    hist = []; moveLog = []; doneParts = []; recT0 = null; recPll = null;
+    phase = ollSide ? "OLL" : "PLL"; curPll = null;
     resetCount(); timerReset(); gReset();
     q("tflash").textContent = "";
-    render();
+    findCands(); paintCase(); render(); paintAid();
+  }
+  /** in the full drill, the moment the top comes good the PLL begins */
+  function checkPhase(){
+    if(!full || phase === "PLL") return false;
+    if(state.slice(0,9) !== "UUUUUUUUU") return false;
+    if(hist.length) doneParts.push(displayState().parts.map((x, i) =>
+      ({t: x.t, cls: x.cls + (i === 0 && /^U(2|')?$/.test(x.t) ? " auf" : "")})));
+    phase = "PLL"; phaseStart = state; hist = []; moveLog = [];
+    curPll = pllCaseOf(state);
+    recT0 = elapsed(); recPll = curPll;          /* the clock on seeing the case starts here */
+    findCands(); paintCase(); paintAid();
+    return true;
   }
   function advance(){
     if(histIdx < history.length - 1){ showEntry(histIdx + 1); return; }
-    if(qi >= queue.length) buildQueue();
-    history.push(makeEntry(queue[qi++]));
+    let guard = 0, e = null;
+    while(!e && guard++ < 200){
+      if(qi >= queue.length){ if(!buildQueue()){ noCase(); return; } }
+      e = makeEntry(queue[qi++]);
+    }
+    if(!e){ noCase(); return; }
+    history.push(e);
     if(history.length > 300) history.shift();
     showEntry(history.length - 1);
+  }
+  function noCase(){
+    ctl.msg("No case fits that — look at the groups and the filter.", "err");
   }
   const backOne = () => histIdx > 0 ? showEntry(histIdx - 1) : restart();
   const escAction = () => moveCount > 0 ? restart() : backOne();
@@ -5855,7 +7123,9 @@ function makeTrainer(root, kind){
   function gReset(){ gBuf.length = 0; gSnap.length = 0; }
   function gBefore(mv){
     if(!retrySeq){ gReset(); return; }
-    gSnap.push({s: state, n: moveCount, f: lastFace, d: lastDir});
+    gSnap.push({s: state, n: moveCount, f: lastFace, d: lastDir,
+                h: hist.slice(), l: moveLog.slice(), ph: phase, ps: phaseStart,
+                dp: doneParts.slice(), cp: curPll});
     gBuf.push(mv);
     while(gBuf.length > retrySeq.length){ gBuf.shift(); gSnap.shift(); }
   }
@@ -5865,35 +7135,246 @@ function makeTrainer(root, kind){
       if(gBuf[gBuf.length - retrySeq.length + i] !== retrySeq[i]) return false;
     const sn = gSnap[gSnap.length - retrySeq.length];
     state = sn.s; moveCount = sn.n; lastFace = sn.f; lastDir = sn.d;
+    hist = sn.h; moveLog = sn.l; doneParts = sn.dp || doneParts;
+    if(full && sn.ph !== phase){ phase = sn.ph; phaseStart = sn.ps; curPll = sn.cp;
+                                 findCands(); paintCase(); paintAid(); }
     gReset(); render();
     return true;
   }
 
+  const isDone = () => (kind === "OLL" && !on("toptPll", false))
+    ? state.slice(0,9) === "UUUUUUUUU" : state === T_SOLVED;
   function doMove(mv){
-    if(finished) return;
+    if(finished || algBusy()) return;
     gBefore(mv);
     timerStart();
     state = tApply(state, mv);
     countMove(mv);
-    render();
+    hist.push(mv); normTokens(hist);
+    moveLog.push({mv: mv, st: state});
     if(gHit()){ escAction(); return; }
     /* going on through the PLL is for the feel of it; what is written down is still
        the OLL, so the moment the top face comes good is kept as it goes past */
-    if(kind === "OLL" && ollMs == null && state.slice(0,9) === "UUUUUUUUU" && tRun)
+    if(ollSide && ollMs == null && state.slice(0,9) === "UUUUUUUUU" && tRun)
       ollMs = performance.now() - tBase;
-    const done = kind === "OLL" && !q("toptPll").checked
-      ? state.slice(0,9) === "UUUUUUUUU" : state === T_SOLVED;
-    if(done) complete();
+    if(isDone()){ render(); complete(); return; }
+    /* an AUF is still looking; the first turn that is not one means it has been seen */
+    if(recT0 != null && !isU(mv)){
+      noteRecog(elapsed() - recT0); recT0 = null;
+    }
+    checkPhase();
+    render();
+  }
+
+  /* ---- what the turns just made add up to, and whether to keep them ---- */
+  /** the turns split into the opening AUF, the algorithm, and the closing AUF */
+  function parseAlg(){
+    const h = hist.slice();
+    let auf = "";
+    if(h.length && isU(h[0]) && !commute(h[0], h[1])) auf = h.shift();
+    if(!on("toptTail", false) && h.length && isU(h[h.length-1])
+       && !commute(h[h.length-2], h[h.length-1])) h.pop();
+    return {auf: auf, body: h};
+  }
+  const sigAfterAuf = auf => sigOf(phase, auf ? tApply(phaseStart, auf) : phaseStart);
+  /** every shape one case can come up as, whatever the settings say */
+  function variantsAll(ph, c){
+    if(ph === "OLL")
+      return [0,1,2,3].map(r => tBuild(tRotL(c.cts, r), tRotL(c.efs, r), [0,1,2,3], [0,1,2,3]));
+    return c.variants.map(v => tBuild([0,0,0,0], [0,0,0,0], v[0], v[1]));
+  }
+  /** a cube that shows the shape one registration was filed under */
+  function repState(ph, caseId, key){
+    const list = ph === "OLL" ? TDATA.cases : TDATA.pll;
+    const c = list.find(x => x.id === caseId);
+    if(!c) return null;
+    for(const st of variantsAll(ph, c))
+      for(let a=0;a<4;a++){
+        let s2 = st;
+        for(let i=0;i<a;i++) s2 = tApply(s2, "U");
+        if(sigOf(ph, s2) === key) return s2;
+      }
+    return null;
+  }
+  function solvesFrom(st0, reported, ph){
+    let s2 = st0;
+    for(const t of reported) s2 = tApply(s2, t);
+    if((ph || phase) === "OLL")
+      return s2.slice(0,9) === "UUUUUUUUU" ? {ok:true}
+           : {ok:false, msg:"That leaves the top face unfinished."};
+    for(let m=0;m<4;m++){
+      let t = s2;
+      for(let i=0;i<m;i++) t = tApply(t, "U");
+      if(t === T_SOLVED) return {ok:true};
+    }
+    return {ok:false, msg:"That does not finish the cube."};
+  }
+  /** try each opening AUF until the algorithm solves the shape */
+  function tryAufs(st0, reported, ph){
+    for(const a of ["", "U", "U2", "U'"]){
+      const cand = normTokens((a ? [a] : []).concat(reported.slice()));
+      if(solvesFrom(st0, cand, ph).ok) return {auf: a, rep: cand};
+    }
+    return null;
+  }
+  /** take the opening AUF (and, unless it is wanted, the closing one) off */
+  function cutAuf(reported, text){
+    const h = reported.slice(), words = String(text || "").split(" ").filter(Boolean);
+    let auf = "";
+    if(h.length && isU(h[0]) && !commute(h[0], h[1])){
+      auf = h.shift();
+      if(words.length && /^U(2|')?$/.test(words[0])) words.shift();
+    }
+    if(!on("toptTail", false) && h.length && isU(h[h.length-1])
+       && !commute(h[h.length-2], h[h.length-1])){
+      h.pop();
+      if(words.length && /^U(2|')?$/.test(words[words.length-1])) words.pop();
+    }
+    return {auf: auf, body: h, text: words.join(" ")};
   }
   function complete(){
     finished = true;
-    const full = timerStop();
-    noteTime(ollMs != null ? ollMs : full);   // the PLL part is not part of the record
+    const whole = timerStop();
+    noteTime(ollMs != null ? ollMs : whole);   // the PLL part is not part of the record
     solvedCount++;
     q("tsolvedCount").textContent = solvedCount;
-    q("tflash").textContent = loop ? "Solved! (once more)" : "Solved!";
-    const tok = ++advToken;
-    setTimeout(() => { if(finished && tok === advToken) loop ? restart() : advance(); }, 900);
+    const after = () => { const tok = ++advToken;
+      setTimeout(() => { if(finished && tok === advToken) loop ? restart() : advance(); }, 900); };
+    /* the full drill is for the feel of a whole last layer; nothing is registered there */
+    if(full){ q("tflash").textContent = loop ? "Solved! (once more)" : "Solved!"; after(); return; }
+    const p = parseAlg();
+    const key = sigAfterAuf(p.auf);
+    const body = p.body.join(" ");
+    /* the same algorithm started from another AUF is not a second algorithm */
+    const same = cands.some(c => c.alg.join(" ") === body)
+              || regList(phase, key).some(r => r.alg === body);
+    if(on("toptAsk", true) && p.body.length && !same){
+      q("tflash").textContent = "Solved!";
+      askRegister(p, key, after);
+      return;
+    }
+    q("tflash").textContent = same ? "Solved!  (already registered)"
+                                   : loop ? "Solved! (once more)" : "Solved!";
+    after();
+  }
+
+  /* ---- keeping an algorithm ---- */
+  const caseWord = c => phase === "OLL" ? "OLL " + ollName(c.id) + "\uff08" + c.shape + "\uff09"
+                                        : "PLL " + pllName(c.id);
+  function askRegister(p, key, done){
+    openReg({
+      pat: "Shape: " + caseWord(curCase),
+      auf: p.auf ? "Started from: " + p.auf + " first" : "Started from: no AUF",
+      alg: fmtToks(p.body),
+      onYes: name => {
+        regAdd(phase, key, p.body, name, curCase.id, fmtToks(p.body));
+        findCands(); paintAid(); render();
+        ctl.msg("Registered: " + fmtToks(p.body), "ok");
+        done();
+      },
+      onEdit: name => openAddEditor(fmtToks(p.body), name, done),
+      onNo: done
+    });
+  }
+  /** write one in by hand for the shape now up */
+  function openAddEditor(text0, name0, done){
+    if(!curCase){ if(done) done(); return; }
+    openEd({
+      title: "Write an algorithm in",
+      pat: caseWord(curCase) + " \u2014 it is checked against the shape on screen before it is kept",
+      text: text0 || "", name: name0 || "", done: done || null,
+      verify: t => {
+        const pr = parseAlgText(t);
+        if(pr.err) return {ok:false, msg: pr.err};
+        const got = tryAufs(phaseStart, pr.reported);
+        if(!got) return {ok:false, msg:"It does not solve this shape from any starting AUF."};
+        const cut = cutAuf(got.rep, pr.text);
+        if(!cut.body.length) return {ok:false, msg:"An AUF on its own cannot be registered."};
+        return {ok:true, reported: cut.body, text: cut.text, show: pr.text,
+                key: sigAfterAuf(cut.auf),
+                msg: "That solves it." + (cut.auf ? "  (kept as starting from " + cut.auf + ")"
+                                                 : "  (kept as starting as it stands)")};
+      },
+      save: (r, nm) => {
+        regAdd(phase, r.key, r.reported, nm, curCase.id, r.text);
+        normalizeReg(); saveReg();
+        findCands(); paintAid(); render();
+        ctl.msg("Registered: " + r.text, "ok");
+      }
+    });
+  }
+  /** everything registered for the shape now up */
+  function paintAid(){
+    const box = q("rlist"), head = q("regHead");
+    if(!box) return;
+    const gs = [];
+    cands.forEach(c => {
+      const key = c.alg.join(" ");
+      let g = gs.find(x => x.key === key);
+      if(!g){ g = {key: key, alg: c.alg, aufs: [], name: c.name, text: c.text, recs: []}; gs.push(g); }
+      if(!g.aufs.includes(c.auf)) g.aufs.push(c.auf);
+      if(!g.name && c.name) g.name = c.name;
+      if(!g.text && c.text) g.text = c.text;
+      if(!g.recs.some(x => x.key === c.sig && x.idx === c.idx)) g.recs.push({key: c.sig, idx: c.idx});
+    });
+    const show = !$("optShowAid") || $("optShowAid").checked;
+    if(head) head.innerHTML = gs.length
+      ? `<b class="yes">${gs.length} registered</b>` : '<b class="no">not registered yet</b>';
+    box.innerHTML = gs.length
+      ? gs.map((g, gi) => `<div class="ritem">
+          <span class="no">${esc(g.aufs.map(a => a || "no AUF").join(" / "))}</span>
+          <span class="a">${show ? esc(g.text || fmtToks(g.alg))
+                                 : '<span class="hid">(hidden)</span>'}${
+            g.name ? `<span class="nm">${esc(g.name)}</span>` : ""}</span>
+          <button class="small" data-act="edit" data-g="${gi}">Edit</button>
+          <button class="small" data-act="del" data-g="${gi}">Delete</button>
+        </div>`).join("")
+      : `<div class="rempty">${full
+          ? "Nothing registered for this shape \u2014 register it on the OLL or PLL tab."
+          : "Nothing registered for this shape yet. Solve it and a window will offer to keep it, or press Add by hand."}</div>`;
+    let tot = 0;
+    for(const k in REG[phase]) tot += REG[phase][k].length;
+    if(q("regTotal")) q("regTotal").textContent = phase + " registered in all: " + tot;
+    box.querySelectorAll("button[data-act]").forEach(b => b.onclick = async () => {
+      const g = gs[+b.dataset.g];
+      if(!g) return;
+      if(b.dataset.act === "del"){
+        if(!await ask("Delete this algorithm?", g.text || fmtToks(g.alg))) return;
+        g.recs.slice().sort((x,y) => y.idx - x.idx).forEach(x => regDel(phase, x.key, x.idx));
+        findCands(); paintAid(); render();
+        return;
+      }
+      const rc = g.recs[0], rec = (REG[phase][rc.key] || [])[rc.idx];
+      if(!rec) return;
+      const ph = phase;
+      openEd({
+        title: "Change this algorithm",
+        pat: (ph === "OLL" ? "OLL " + ollName(rec.case) : "PLL " + pllName(rec.case))
+             + " \u2014 it is checked against that shape before it is kept",
+        text: algText(rec), name: rec.name || "",
+        verify: t => {
+          const pr = parseAlgText(t);
+          if(pr.err) return {ok:false, msg: pr.err};
+          const st0 = repState(ph, rec.case, rc.key);
+          if(!st0) return {ok:false, msg:"That shape could not be built."};
+          const got = tryAufs(st0, pr.reported, ph);
+          if(!got) return {ok:false, msg:"It does not solve that shape from any starting AUF."};
+          const cut = cutAuf(got.rep, pr.text);
+          if(!cut.body.length) return {ok:false, msg:"An AUF on its own cannot be registered."};
+          return {ok:true, reported: cut.body, text: cut.text, show: pr.text,
+                  key: cut.auf ? sigOf(ph, tApply(st0, cut.auf)) : rc.key,
+                  msg: "That solves it."
+                       + (cut.auf ? "  (kept as starting from " + cut.auf + ")" : "")};
+        },
+        save: (r, nm) => {
+          if(r.key === rc.key){ rec.alg = r.reported.join(" "); rec.text = r.text; rec.name = nm; }
+          else { regDel(ph, rc.key, rc.idx); regAdd(ph, r.key, r.reported, nm, rec.case, r.text); }
+          normalizeReg(); saveReg();
+          findCands(); paintAid(); render();
+          ctl.msg("Changed: " + r.text, "ok");
+        }
+      });
+    });
   }
 
   /* ---- the buttons and the settings that belong to this drill ---- */
@@ -5903,19 +7384,36 @@ function makeTrainer(root, kind){
   q("tbtnTimeClear").onclick = () => { tLog = []; tStats(); };
   if(q("tbtnAvgSort")) q("tbtnAvgSort").onclick = () => {
     avgDesc = !avgDesc; LS.set(LSK("avgdesc"), avgDesc ? "1" : "0"); paintAvg(); };
+  if(q("tbtnRecSort")) q("tbtnRecSort").onclick = () => {
+    recDesc = !recDesc; LS.set(LSK("recdesc"), recDesc ? "1" : "0"); paintRecog(); };
   q("tbtnClearAvg").onclick = async () => {
-    if(!Object.keys(caseT).length){ ctl.msg("There are no " + kind + " times to delete."); return; }
+    if(!Object.keys(caseT).length && !Object.keys(recT).length){
+      ctl.msg("There are no " + kind + " times to delete."); return; }
     if(!await ask("Delete the " + kind + " times?",
         "The average for every " + kind + " case goes for good.\nThis cannot be undone.")) return;
     caseT = {}; saveCaseT(); paintAvg();
+    recT = {}; saveRecT(); paintRecog();
     ctl.msg("The " + kind + " case times are cleared.", "ok");
   };
   q("toptOrder").onchange = () => { LS.set(LSK("order"), q("toptOrder").value);
                                     buildQueue(); history = []; histIdx = -1; advance(); };
   q("toptAuf").onchange = () => { LS.set(LSK("auf"), q("toptAuf").checked ? "1" : "0");
                                   history = []; histIdx = -1; advance(); };
-  if(q("toptPll")) q("toptPll").onchange = () => { LS.set(LSK("pll"), q("toptPll").checked ? "1" : "0");
-                                                   history = []; histIdx = -1; advance(); };
+  q("toptFilter").onchange = () => { LS.set(LSK("filter"), q("toptFilter").value);
+                                     history = []; histIdx = -1; buildQueue(); advance(); };
+  q("toptAsk").onchange  = () => LS.set(LSK("ask"),  q("toptAsk").checked  ? "1" : "0");
+  q("tbtnAddAlg").onclick = () => openAddEditor("", "", null);
+  q("tbtnRegClear").onclick = async () => {
+    const ph = phase;
+    let tot = 0; for(const k in REG[ph]) tot += REG[ph][k].length;
+    if(!tot){ ctl.msg("There are no " + ph + " algorithms to delete."); return; }
+    if(!await ask("Delete every " + ph + " algorithm?",
+        tot + " registered algorithm" + (tot > 1 ? "s go" : " goes")
+        + " for good.\nThis cannot be undone.")) return;
+    REG[ph] = {}; saveReg();
+    findCands(); paintAid(); render();
+    ctl.msg("Every " + ph + " algorithm is deleted.", "ok");
+  };
   /* what else to show beside the cube, which is always there */
   [["toptTop","vTop"], ["toptTimer","vTimer"]].forEach(([id, cls]) => {
       const cb = q(id);
@@ -5926,20 +7424,32 @@ function makeTrainer(root, kind){
       cb.onchange = apply; apply();
     });
 
-  q("toptOrder").value = LS.get(LSK("order"), "random");
-  q("toptAuf").checked = LS.get(LSK("auf"), "1") === "1";
-  if(q("toptPll")) q("toptPll").checked = LS.get(LSK("pll"), "0") === "1";
+  q("toptOrder").value  = LS.get(LSK("order"), "random");
+  q("toptFilter").value = LS.get(LSK("filter"), "all");
+  q("toptAuf").checked  = LS.get(LSK("auf"), "1") === "1";
+  q("toptAsk").checked  = LS.get(LSK("ask"), "1") === "1";
 
-  buildGroups(); buildQueue(); advance(); tStats(); paintAvg();
+  buildGroups(); buildQueue(); advance(); tStats(); paintAvg(); paintRecog();
 
   return {
     kind: kind,
     move: doMove,
     retry: escAction,
     restart: restart,
-    repaint: () => { render(); paintAvg(); },
-    clearTimes: () => { caseT = {}; saveCaseT(); paintAvg(); },
+    repaint: () => { findCands(); render(); paintAvg(); paintRecog(); paintAid(); },
+    aid: () => paintAid(),
+    phase: () => phase,
+    hist: () => hist.slice(),
+    cands: () => cands.length,
+    candList: () => cands.map(c => ({auf: c.auf, alg: c.alg.join(" "), full: c.full.join(" ")})),
+    match: () => { const b = bestMatch(); return b ? {j: b.j, of: b.steps.length, way: b.way} : null; },
+    addByHand: () => openAddEditor("", "", null),
+    clearTimes: () => { caseT = {}; saveCaseT(); paintAvg();
+                        recT = {}; saveRecT(); paintRecog(); },
+    recogTimes: () => JSON.parse(JSON.stringify(recT)),
     caseTimes: () => JSON.parse(JSON.stringify(caseT)),
+    setCaseTimes: o => { caseT = o || {}; saveCaseT(); paintAvg(); },
+    setRecogTimes: o => { recT = o || {}; saveRecT(); paintRecog(); },
     noteTime: noteTime,
     state: () => state,
     caseId: () => curCase && curCase.id,
@@ -5955,12 +7465,19 @@ function makeTrainer(root, kind){
    ============================================================ */
 const TRAIN = {};
 (function startTrainers(){
-  TRAIN.oll = makeTrainer(document.querySelector('.trainer[data-a="oll"]'), "OLL");
-  TRAIN.pll = makeTrainer(document.querySelector('.trainer[data-a="pll"]'), "PLL");
+  normalizeReg(); saveReg();          // old registrations are brought to today's shape
+  TRAIN.oll  = makeTrainer(document.querySelector('.trainer[data-a="oll"]'),  "OLL");
+  TRAIN.pll  = makeTrainer(document.querySelector('.trainer[data-a="pll"]'),  "PLL");
+  TRAIN.full = makeTrainer(document.querySelector('.trainer[data-a="full"]'), "FULL");
+  $("optShowAid").checked = LS.get("t.showaid", "1") === "1";
+  $("optSlice").checked   = LS.get("t.slice", "1") === "1";
+  const both = () => { TRAIN.oll.repaint(); TRAIN.pll.repaint(); TRAIN.full.repaint(); };
+  $("optShowAid").onchange = () => { LS.set("t.showaid", $("optShowAid").checked ? "1" : "0"); both(); };
+  $("optSlice").onchange   = () => { LS.set("t.slice",   $("optSlice").checked   ? "1" : "0"); both(); };
 })();
 /* Esc is what the drills have always taken for "this one again" */
 document.addEventListener("keydown", e => {
-  if(e.key !== "Escape" || (app !== "oll" && app !== "pll")) return;
+  if(e.key !== "Escape" || !TRAIN[app] || algBusy()) return;
   if($("modal") && $("modal").style.display !== "none") return;   // a question is up
   const t = e.target;
   if(t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
