@@ -304,8 +304,8 @@
     gap:6px;padding:6px;background:#0d0f13;border-radius:14px}
   .tface3d > div{border-radius:7px}
   .tstatsPanel{min-width:190px}
-  .tcaseNo{font-size:15px;margin-bottom:2px}
-  .tcaseSub{font-size:12px;color:var(--muted);margin-bottom:8px;min-height:32px;line-height:1.5}
+  .tcaseNo{font-size:15px;margin-bottom:10px;min-height:20px}
+  .trainer:not(.vName) .tcaseNo{visibility:hidden}   /* the name is a choice, not a given */
   .tflash{font-size:20px;font-weight:bold;color:var(--ok);height:26px}
   .trainer h2{font-size:12px;color:var(--muted);font-weight:normal;letter-spacing:.05em;margin:0 0 10px}
   .thuge{font-size:34px;font-weight:bold;font-variant-numeric:tabular-nums;line-height:1.05}
@@ -691,7 +691,7 @@
 <!-- ============ the three last-layer drills ============ -->
 
 <div class="apppane trainer vTimer" data-a="oll" style="display:none">
-  <div class="tviewbar">Also show:<span class="viewopts"><label><input type="checkbox" class="toptTop"> Top view</label><label><input type="checkbox" class="toptTimer"> Timer</label></span></div>
+  <div class="tviewbar">Also show:<span class="viewopts"><label><input type="checkbox" class="toptName"> Case name</label><label><input type="checkbox" class="toptTop"> Top view</label><label><input type="checkbox" class="toptTimer"> Timer</label></span></div>
   <div class="tgrid">
     <div class="panel tcubePanel">
       <div class="tcubeRow">
@@ -706,7 +706,6 @@
 
     <div class="panel tstatsPanel">
       <div class="tcaseNo tcaseTitle">&mdash;</div>
-      <div class="tcaseSub">&nbsp;</div>
       <div class="tflash"></div>
       <h2>Moves (U2 / R2 count as 1)</h2>
       <div class="thuge tmoveCount">0</div>
@@ -763,7 +762,7 @@
 </div>
 
 <div class="apppane trainer vTimer" data-a="pll" style="display:none">
-  <div class="tviewbar">Also show:<span class="viewopts"><label><input type="checkbox" class="toptTop"> Top view</label><label><input type="checkbox" class="toptTimer"> Timer</label></span></div>
+  <div class="tviewbar">Also show:<span class="viewopts"><label><input type="checkbox" class="toptName"> Case name</label><label><input type="checkbox" class="toptTop"> Top view</label><label><input type="checkbox" class="toptTimer"> Timer</label></span></div>
   <div class="tgrid">
     <div class="panel tcubePanel">
       <div class="tcubeRow">
@@ -778,7 +777,6 @@
 
     <div class="panel tstatsPanel">
       <div class="tcaseNo tcaseTitle">&mdash;</div>
-      <div class="tcaseSub">&nbsp;</div>
       <div class="tflash"></div>
       <h2>Moves (U2 / R2 count as 1)</h2>
       <div class="thuge tmoveCount">0</div>
@@ -835,7 +833,7 @@
 </div>
 
 <div class="apppane trainer vTimer" data-a="full" style="display:none">
-  <div class="tviewbar">Also show:<span class="viewopts"><label><input type="checkbox" class="toptTop"> Top view</label><label><input type="checkbox" class="toptTimer"> Timer</label></span></div>
+  <div class="tviewbar">Also show:<span class="viewopts"><label><input type="checkbox" class="toptName"> Case name</label><label><input type="checkbox" class="toptTop"> Top view</label><label><input type="checkbox" class="toptTimer"> Timer</label></span></div>
   <div class="tgrid">
     <div class="panel tcubePanel">
       <div class="tcubeRow">
@@ -850,7 +848,6 @@
 
     <div class="panel tstatsPanel">
       <div class="tcaseNo tcaseTitle">&mdash;</div>
-      <div class="tcaseSub">&nbsp;</div>
       <div class="tflash"></div>
       <h2>Moves (U2 / R2 count as 1)</h2>
       <div class="thuge tmoveCount">0</div>
@@ -6867,10 +6864,11 @@ function makeTrainer(root, kind){
   }
 
   function render(){
-    /* M and the wide turns carry the centres with them, so the cube on screen is
-       drawn the way it now sits in the hand, not the way the case was built */
+    /* Along a registered algorithm, M and the wide turns carry the centres with them
+       and the cube on screen follows. Anywhere else — and always once the case is
+       out — the chosen faces are put back on top and in front. */
     const d = displayState();
-    const view = applyPerm(state, d.oriD);
+    const view = applyPerm(state, (finished || isDone()) ? ID54 : d.oriD);
     for(let i=0;i<54;i++) cells3d[i].style.background = T_COLOR[view[i]];
     /* while the OLL is what is being worked on, only the top colour matters */
     const flat = phase === "OLL";
@@ -6943,9 +6941,12 @@ function makeTrainer(root, kind){
     const known = cands.length > 0;
     const best = bestMatch();
     if(!best){
+      /* off every registered way. The letters may still be read as wide or slice turns,
+         but which of them was really made cannot be known, so the cube on screen is
+         left with the chosen faces on top and in front rather than guessed at. */
       const r = readMoves(hist);
       return {parts: viewParts(hist).map(x => ({t: x.t, cls: known ? "ng" : "n"})),
-              ori: r.ori, oriD: r.ori};
+              ori: r.ori, oriD: ID54};
     }
     const out = [];
     for(let i=0;i<best.j;i++) out.push({t: best.steps[i].w, cls: "ok"});
@@ -7058,14 +7059,12 @@ function makeTrainer(root, kind){
   function paintCase(){
     if(phase === "PLL" && (full || !ollSide)){
       const c = full ? curPll : curCase;
-      q("tcaseTitle").textContent = c ? "PLL " + pllName(c.id) : "PLL";
-      q("tcaseSub").textContent = c ? c.grp + "　Corners: " + c.c + "　Edges: " + c.e
-                                    : "the last layer is already in place";
+      q("tcaseTitle").textContent = c ? "PLL " + pllName(c.id)
+                                      : "PLL — the last layer is already in place";
       return;
     }
     const c = curCase;
     q("tcaseTitle").textContent = c ? "OLL " + ollName(c.id) + " / 57" : "—";
-    q("tcaseSub").textContent = c ? c.shape + "　Oriented edges " + c.oe + " / corners " + c.oc : "";
   }
   function showEntry(i){
     histIdx = i;
@@ -7415,7 +7414,7 @@ function makeTrainer(root, kind){
     ctl.msg("Every " + ph + " algorithm is deleted.", "ok");
   };
   /* what else to show beside the cube, which is always there */
-  [["toptTop","vTop"], ["toptTimer","vTimer"]].forEach(([id, cls]) => {
+  [["toptName","vName"], ["toptTop","vTop"], ["toptTimer","vTimer"]].forEach(([id, cls]) => {
       const cb = q(id);
       cb.checked = LS.get(LSK(id), id === "toptTimer" ? "1" : "0") === "1";
       const apply = () => { root.classList.toggle(cls, cb.checked);
